@@ -22,6 +22,8 @@
     {id:'HRK-0001',date:'2026-10-15T14:10:00.000Z',materialId:'MLZ-0002',type:'Giriş',qty:145,from:'',to:'D01',note:'Demo başlangıç stoku',actor:'Demo'}
   ];
   let data = loadData();
+  // İlk açılışta demo verisini ortak tarayıcı deposuna yaz; dashboard ve ana ekran aynı kayıtları okusun.
+  try { if (!localStorage.getItem(STORAGE_KEY)) localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { console.warn('Başlangıç verisi kaydedilemedi.', e); }
   let toastTimer, qrScanner = null;
   let nextMaterialNumber = Math.max(0, ...data.materials.map(m => Number((m.id.match(/(\d+)$/)||[])[1]) || 0)) + 1;
   let nextMovementNumber = Math.max(0, ...data.movements.map(m => Number((m.id.match(/(\d+)$/)||[])[1]) || 0)) + 1;
