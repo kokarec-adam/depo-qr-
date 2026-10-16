@@ -89,7 +89,7 @@
     $('recentTable').innerHTML=rows.length?rows.map(m=>'<tr><td>'+materialCell(m)+'</td><td><code class="code-chip">'+esc(m.id)+'</code></td><td><span class="loc-text">'+esc(depotName(m.depotId))+'<br>'+esc(locationText(m))+'</span></td><td><span class="stock-value">'+num(m.stock)+' '+esc(m.unit)+'</span></td><td>'+statusHTML(m)+'</td><td><div class="row-actions">'+actionButtons(m)+'</div></td></tr>').join(''):'<tr><td class="empty-row" colspan="6">Henüz malzeme eklenmedi. İlk stok kartını oluşturabilirsin.</td></tr>';
   }
   function materialCell(m) { return '<div class="material-cell"><div class="material-thumb">'+iconFor(m)+'</div><div><span class="material-name">'+esc(m.name)+'</span><span class="material-sub">'+esc(m.brand||m.category||'Malzeme')+'</span></div></div>'; }
-  function actionButtons(m) { return '<button class="small-icon-btn" data-action="view" data-id="'+esc(m.id)+'" title="Malzeme kartını aç" aria-label="Malzeme kartını aç">↗</button><button class="small-icon-btn" data-action="qr" data-id="'+esc(m.id)+'" title="QR etiketi" aria-label="QR etiketi">▦</button>'; }
+  function actionButtons(m) { return '<button class="small-icon-btn" data-action="view" data-id="'+esc(m.id)+'" title="Malzeme kartını aç" aria-label="Malzeme kartını aç">↗</button><button class="small-icon-btn" data-action="qr" data-id="'+esc(m.id)+'" title="QR etiketi" aria-label="QR etiketi">▦</button><button class="small-icon-btn delete-material-btn" data-action="delete" data-id="'+esc(m.id)+'" title="Malzemeyi sil" aria-label="Malzemeyi sil">🗑</button>'; }
   function renderFilterOptions() {
     const options=data.depots.map(d=>'<option value="'+esc(d.id)+'">'+esc(d.id)+' · '+esc(d.name)+'</option>').join('');
     const old=$('depotFilter').value; $('depotFilter').innerHTML='<option value="">Tüm depolar</option>'+options; if(data.depots.some(d=>d.id===old))$('depotFilter').value=old;
@@ -216,10 +216,11 @@
       '<div class="detail-stock"><span>Mevcut stok</span><strong>'+num(m.stock)+' <span style="font:500 12px DM Sans,sans-serif">'+esc(m.unit)+'</span></strong></div>'+
       '<div class="detail-grid">'+[['Depo',depotName(m.depotId)+' ('+m.depotId+')'],['Raf / göz',locationText(m)],['Minimum stok',num(m.minStock)+' '+m.unit],['Marka',m.brand||'Belirtilmedi'],['Model / ölçü',m.model||'Belirtilmedi'],['Kart oluşturma',dateTime(m.createdAt)]].map(([l,v])=>'<div class="detail-item"><small>'+l+'</small><strong>'+esc(v)+'</strong></div>').join('')+'</div>'+
       (m.notes?'<div class="detail-notes"><strong>Not:</strong> '+esc(m.notes)+'</div>':'');
-    showModal(m.name,'MALZEME KARTI · '+m.id,body,'<button class="secondary-button" data-modal-close>Kapat</button><button class="secondary-button" id="detailQR">▦ QR etiketi</button><button class="secondary-button" id="detailMove">↔ Stok hareketi</button><button class="primary-button" id="detailEdit">✎ Düzenle</button>');
+    showModal(m.name,'MALZEME KARTI · '+m.id,body,'<button class="secondary-button" data-modal-close>Kapat</button><button class="secondary-button" id="detailQR">▦ QR etiketi</button><button class="secondary-button" id="detailMove">↔ Stok hareketi</button><button class="secondary-button" id="detailDelete" style="color:#b42332;border-color:#f0c7cc">🗑 Sil</button><button class="primary-button" id="detailEdit">✎ Düzenle</button>');
     $('detailQR').addEventListener('click',()=>closeAnd(()=>generateLabelsFor([m.id],1)));
     $('detailMove').addEventListener('click',()=>closeAnd(()=>movementForm('Giriş',m.id)));
     $('detailEdit').addEventListener('click',()=>closeAnd(()=>materialForm(m)));
+    $('detailDelete').addEventListener('click',()=>deleteMaterial(m.id));
   }
   function generateLabelsFor(ids,copies=1) {
     const mats=ids.map(material).filter(Boolean);if(!mats.length){showToast('Etiket için kayıtlı bir malzeme seç.',true);return;}
@@ -285,11 +286,21 @@
     }catch(e){showToast('Yedek dosyası okunamadı: '+e.message,true);}};
     reader.onerror=()=>showToast('Dosya okunamadı.',true);reader.readAsText(file);
   }
+  function deleteMaterial(id){
+    const m=material(id); if(!m){showToast('Malzeme kaydı bulunamadı.',true);return;}
+    const related=data.movements.filter(x=>x.materialId===id).length;
+    const warning=Number(m.stock)>0?' Bu malzemenin mevcut stoğu '+num(m.stock)+' '+(m.unit||'')+'.':'';
+    const history=related?' İlişkili '+related+' stok hareketi kaydı da silinecek.':'';
+    if(!confirm('"'+m.name+'" ('+m.id+') malzemesini kalıcı olarak silmek istiyor musun?'+warning+history+' Bu işlem geri alınamaz.'))return;
+    data.materials=data.materials.filter(x=>x.id!==id);
+    data.movements=data.movements.filter(x=>x.materialId!==id);
+    saveData();closeModal();renderAll();showToast('Malzeme ve ilişkili hareket kayıtları silindi.');
+  }
   function renderAll(){renderDashboard();renderMaterials();renderMovements();renderDepots();renderLabelOptions();}
   document.addEventListener('click',e=>{
     const nav=e.target.closest('[data-view]');if(nav){goView(nav.dataset.view);return;}
     const go=e.target.closest('[data-goto]');if(go){goView(go.dataset.goto);return;}
-    const act=e.target.closest('[data-action]');if(act){const m=material(act.dataset.id);if(act.dataset.action==='view')openDetail(act.dataset.id);else if(act.dataset.action==='edit')materialForm(m);else if(act.dataset.action==='qr')generateLabelsFor([act.dataset.id],1);return;}
+    const act=e.target.closest('[data-action]');if(act){const m=material(act.dataset.id);if(act.dataset.action==='view')openDetail(act.dataset.id);else if(act.dataset.action==='edit')materialForm(m);else if(act.dataset.action==='qr')generateLabelsFor([act.dataset.id],1);else if(act.dataset.action==='delete')deleteMaterial(act.dataset.id);return;}
     if(e.target.closest('[data-modal-close]'))closeModal();
     const editDepot=e.target.closest('[data-depot-edit]');if(editDepot){e.stopPropagation();depotForm(data.depots.find(d=>d.id===editDepot.dataset.depotEdit));return;}
   });
