@@ -21,6 +21,7 @@
       .pro-panel-head h3{margin:0;font-size:20px;color:#1b3046}.pro-panel-head span{font-size:14px;color:#8191a2}
       .pro-table{width:100%;border-collapse:collapse}.pro-table th{padding:12px 18px;text-align:left;font-size:11px;letter-spacing:.08em;color:#8191a2;background:#f7f9fb}.pro-table td{padding:15px 18px;border-top:1px solid #edf1f5;font-size:14px;color:#2d4155}.pro-table tr:first-child td{border-top:0}
       .pro-name{font-weight:800;color:#1d3349}.pro-muted{display:block;color:#8494a5;font-size:12px;margin-top:3px}.pro-number{font-weight:900;font-size:16px}.pro-badge{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:12px;font-weight:800}.pro-badge.normal{background:#e8f7ef;color:#176b4a}.pro-badge.critical{background:#fff2d9;color:#9a6200}.pro-badge.zero{background:#fde8e8;color:#a33131}
+      .stats-grid .stat-card.critical-stat-clickable{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}.stats-grid .stat-card.critical-stat-clickable:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(154,98,0,.13);border-color:#f0d8ad}.stats-grid .stat-card.critical-stat-clickable:focus-visible{outline:3px solid #e6a23c;outline-offset:3px}
       .pro-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.pro-mini[data-critical-open]{cursor:pointer;border-color:#f0d8ad;background:linear-gradient(135deg,#fff 0%,#fffaf0 100%)}.pro-mini[data-critical-open]:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(154,98,0,.12)}.pro-mini[data-critical-open] small:after{content:' · Tıkla';color:#b87812;font-weight:800}.pro-mini{background:#fff;border:1px solid #dfe7ef;border-radius:16px;padding:17px 18px;transition:transform .2s ease,box-shadow .2s ease}.pro-mini:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(24,43,63,.08)}.pro-mini small{display:block;color:#7b8da0;font-size:12px;font-weight:700}.pro-mini strong{display:block;margin-top:7px;font-size:27px;color:#1c3046}
       .pro-empty{padding:30px;text-align:center;color:#8494a5;font-size:14px}
       .global-search{position:relative;display:flex;align-items:center;gap:9px;width:min(340px,30vw);height:52px;padding:0 14px;background:#f7f9fb;border:2px solid #dfe7ef;border-radius:13px;transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease}.global-search:focus-within{border-color:#76a9f5;box-shadow:0 0 0 4px rgba(40,120,238,.11);transform:translateY(-1px)}.global-search-icon{font-size:24px;color:#6d8298}.global-search input{width:100%;border:0;outline:0;background:transparent;color:#2c4258;font-size:17px;font-weight:600}.global-search input::placeholder{color:#92a0ae}.global-search button{border:0;background:transparent;color:#5b7da4;font-size:20px;padding:5px;border-radius:8px}.global-search button:hover{background:#eaf2ff;color:#2878ee}
@@ -38,6 +39,17 @@
 
   function ensureUI(){
     injectStyle();
+    const criticalStat=document.getElementById('statCritical')?.closest('.stat-card');
+    if(criticalStat&&!criticalStat.dataset.criticalClickBound){
+      criticalStat.dataset.criticalClickBound='1';
+      criticalStat.classList.add('critical-stat-clickable');
+      criticalStat.setAttribute('role','button');
+      criticalStat.setAttribute('tabindex','0');
+      criticalStat.setAttribute('aria-label','Kritik stok listesini aç');
+      const open=()=>openCriticalInventory();
+      criticalStat.addEventListener('click',open);
+      criticalStat.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+    }
     const top=document.querySelector('.topbar-actions');
     if(top && !document.getElementById('globalMaterialSearch')){
       const wrap=document.createElement('div'); wrap.className='global-search'; wrap.id='globalMaterialSearch';
