@@ -209,7 +209,26 @@
     const total=mats.reduce((s,m)=>s+copies,0);if(total>60){showToast('Tek seferde en fazla 60 etiket üretilebilir.',true);return;}
     $('printRoot').innerHTML='<div class="print-label-grid">'+mats.flatMap(m=>Array.from({length:copies},()=>'<div class="qr-label"><div class="qr-render" data-qr="'+esc(m.id)+'"></div><strong>'+esc(m.name)+'</strong><code>'+esc(m.id)+'</code><small>'+esc(depotName(m.depotId))+' · '+esc(locationText(m))+'</small></div>')).join('')+'</div>';
     const output=$('labelOutput');output.innerHTML='<div class="label-output">'+mats.flatMap(m=>Array.from({length:copies},()=>'<div class="qr-label"><div class="qr-render" data-qr="'+esc(m.id)+'"></div><strong>'+esc(m.name)+'</strong><code>'+esc(m.id)+'</code><small>'+esc(depotName(m.depotId))+' · '+esc(locationText(m))+'</small></div>')).join('')+'</div>';
-    drawQrs();showToast(total+' QR etiket önizlemesi oluşturuldu.');
+    goView('labels');
+    drawQrs();
+    if(!$('downloadLabels')){
+      const b=document.createElement('button');
+      b.id='downloadLabels'; b.className='secondary-button'; b.textContent='⇩ İndir';
+      $('printLabels').parentElement.appendChild(b);
+      b.addEventListener('click',downloadCurrentQR);
+    }
+    showToast(total+' QR etiket önizlemesi oluşturuldu.');
+  }
+  function downloadCurrentQR(){
+    const label=$('printRoot').querySelector('.qr-label');
+    const canvas=label?.querySelector('canvas');
+    const img=label?.querySelector('img');
+    if(!canvas && !img){showToast('Önce QR etiketi oluştur.',true);return;}
+    const a=document.createElement('a');
+    a.href=canvas?canvas.toDataURL('image/png'):img.src;
+    a.download='depoqr-'+(label.querySelector('code')?.textContent||'etiket')+'.png';
+    document.body.appendChild(a);a.click();a.remove();
+    showToast('QR etiketi PNG olarak indirildi.');
   }
   function drawQrs() {
     const all=[...document.querySelectorAll('#printRoot .qr-render'),...document.querySelectorAll('#labelOutput .qr-render')];
