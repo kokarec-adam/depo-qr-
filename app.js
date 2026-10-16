@@ -68,6 +68,21 @@
     $('navMaterialCount').textContent=data.materials.length;
     $('todayDate').textContent=new Intl.DateTimeFormat('tr-TR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).format(new Date());
     $('dashboardDepots').innerHTML=data.depots.map((d,i)=>'<div class="depot-row" data-depot-id="'+esc(d.id)+'" role="button" tabindex="0" aria-label="'+esc(d.name)+' deposundaki malzemeleri gör"><div class="depot-icon">'+({D01:'▥',D02:'⚙',D03:'▣',D99:'⌘'}[d.id]||'▥')+'</div><div class="depot-main"><strong>'+esc(d.name)+'</strong><small>'+esc(d.id)+' · '+esc(d.description||'Depo lokasyonu')+'</small></div><div class="depot-amount">'+num(depotTotal(d.id))+'<small>'+getDepotMaterials(d.id).length+' malzeme çeşidi</small></div></div>').join('')||'<div class="empty-state"><strong>Henüz depo yok</strong></div>';
+    const openDashboardDepot = id => {
+      const d=data.depots.find(x=>x.id===id); if(!d) return;
+      const ms=getDepotMaterials(id).slice().sort((a,b)=>a.name.localeCompare(b.name,'tr'));
+      const body=ms.length
+        ? '<div class="table-wrap"><table><thead><tr><th>MALZEME</th><th>KOD</th><th>RAF / GÖZ</th><th>STOK</th><th>DURUM</th></tr></thead><tbody>'+ms.map(m=>'<tr><td><strong>'+esc(m.name)+'</strong><br><small>'+esc(m.category||'Kategorisiz')+'</small></td><td><code class="code-chip">'+esc(m.id)+'</code></td><td>'+esc([m.shelf,m.bin].filter(Boolean).join(' / ')||'Belirtilmedi')+'</td><td><strong>'+num(m.stock)+' '+esc(m.unit||'')+'</strong></td><td>'+statusHTML(m)+'</td></tr>').join('')+'</tbody></table></div>'
+        : '<div class="empty-state"><strong>Bu depoda malzeme yok</strong><p>Bu depoya malzeme ekleyebilir veya mevcut bir malzemenin konumunu değiştirebilirsin.</p></div>';
+      showModal(d.name+' — Malzemeler',d.id+' · DEPO ENVANTERİ',body,'<button class="secondary-button" data-modal-close>Kapat</button><button class="primary-button" id="addMaterialToDepot">＋ Bu depoya malzeme ekle</button>');
+      $('addMaterialToDepot').addEventListener('click',()=>{closeModal();materialForm(null);setTimeout(()=>{const select=$('mDepot');if(select)select.value=id;},0);});
+    };
+    const depotList=$('dashboardDepots');
+    depotList.querySelectorAll('.depot-row').forEach(row=>{
+      row.style.cursor='pointer';
+      row.addEventListener('click',()=>openDashboardDepot(row.dataset.depotId));
+      row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDashboardDepot(row.dataset.depotId);}});
+    });
     const rows=[...data.materials].sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||''))).slice(0,5);
     $('recentTable').innerHTML=rows.length?rows.map(m=>'<tr><td>'+materialCell(m)+'</td><td><code class="code-chip">'+esc(m.id)+'</code></td><td><span class="loc-text">'+esc(depotName(m.depotId))+'<br>'+esc(locationText(m))+'</span></td><td><span class="stock-value">'+num(m.stock)+' '+esc(m.unit)+'</span></td><td>'+statusHTML(m)+'</td><td><div class="row-actions">'+actionButtons(m)+'</div></td></tr>').join(''):'<tr><td class="empty-row" colspan="6">Henüz malzeme eklenmedi. İlk stok kartını oluşturabilirsin.</td></tr>';
   }
