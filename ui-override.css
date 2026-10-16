@@ -17,6 +17,18 @@ body{font-size:18px;line-height:1.55}
 .table-panel{padding-top:28px}.table-panel>.panel-heading{padding:0 30px;margin-bottom:20px}th{padding:17px 24px;font-size:13px}td{padding:20px 24px;font-size:16px}.material-cell{gap:15px;min-width:280px}.material-thumb{width:52px;height:52px;font-size:23px}.material-name{font-size:18px}.material-sub{font-size:13px}.code-chip{font-size:14px;padding:8px 11px}.loc-text{font-size:14px}.status{padding:8px 12px;font-size:13px}.small-icon-btn{height:42px;width:43px;font-size:20px}
 .toolbar{padding:24px;gap:16px}.search-wrap{height:56px;padding:0 17px}.search-wrap span{font-size:26px}.search-wrap input{font-size:17px}.toolbar select,.form-grid select,.form-grid input,.form-grid textarea,.label-form select,.label-form input,.scan-manual input{height:56px;font-size:16px;padding:0 15px}
 .page-heading .heading-date{display:none}
+/* Daha az seçenek: ana menüde sadece temel işler */
+.nav-item[data-view="movements"],.nav-item[data-view="depots"]{display:none}
+.sidebar-bottom .mode-card,.sidebar-bottom #exportBtn,.sidebar-bottom #importBtn,.sidebar-bottom .user-panel{display:none}
+.quick-panel,.dashboard-grid>.quick-panel,.table-panel{display:none}
+.dashboard-grid{grid-template-columns:1fr}
+.depot-panel{padding:32px 34px}
+.depot-row{min-height:86px}
+.depot-main strong{font-size:20px}
+.depot-main small{font-size:15px}
+.depot-amount{font-size:20px}
+/* Malzeme ekranında filtre kalabalığını azalt */
+#stockFilter{display:none}
 @media(max-width:1100px){.sidebar{width:260px}.main-area{margin-left:260px}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-grid{grid-template-columns:1fr}.page-content{padding:34px 28px 60px}}
 @media(max-width:760px){html{font-size:17px}.sidebar{position:static;width:100%;height:auto;padding:18px}.brand{padding-bottom:18px}.nav-list{grid-template-columns:1fr 1fr}.nav-item{height:58px;font-size:17px}.workspace-label{display:none}.sidebar-bottom{display:none}.main-area{margin-left:0}.topbar{height:72px;padding:0 16px}.topbar-left .breadcrumb{font-size:14px}.topbar-actions .system-pill,.topbar-actions .icon-button{display:none}.page-content{padding:24px 16px 45px}.page-heading h1{font-size:34px}.subheading{font-size:16px}.stats-grid{grid-template-columns:1fr 1fr;gap:12px}.stat-card{padding:19px}.stat-label{font-size:14px}.stat-number{font-size:36px}.dashboard-grid{gap:14px}.depot-panel,.quick-panel{padding:20px}.panel-heading h2{font-size:21px}.quick-action strong{font-size:16px}.quick-action small{font-size:13px}.table-panel>.panel-heading{padding:0 20px}.table-wrap{overflow-x:auto}}
 @media(max-width:480px){.nav-list{grid-template-columns:1fr}.stats-grid{grid-template-columns:1fr}.page-heading h1{font-size:31px}.primary-button{width:100%}.page-heading{display:block}.depot-row{gap:12px}.depot-amount{font-size:16px}}
