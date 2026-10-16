@@ -9,108 +9,32 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="dashboard-pro.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
-      <a class="brand" href="#" aria-label="DepoQR ana sayfa">
-        <span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 13 20 5l15 8v16l-15 8L5 29Z" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M5 13l15 9 15-9M20 22v15M13 9l15 9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M24 23h5v5h-5z" fill="currentColor"/></svg></span>
-        <span><strong>Depo<span class="brand-accent">QR</span></strong><small>ENVANTER SİSTEMİ</small></span>
-      </a>
+      <a class="brand" href="#" aria-label="DepoQR ana sayfa"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 13 20 5l15 8v16l-15 8L5 29Z" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M5 13l15 9 15-9M20 22v15M13 9l15 9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M24 23h5v5h-5z" fill="currentColor"/></svg></span><span><strong>Depo<span class="brand-accent">QR</span></strong><small>ENVANTER SİSTEMİ</small></span></a>
       <div class="workspace-label">ÇALIŞMA ALANI</div>
-      <nav class="nav-list" aria-label="Ana menü">
-        <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▦</span> Genel Bakış</button>
-        <button class="nav-item" data-view="materials"><span class="nav-icon">▤</span> Malzemeler <span class="nav-count" id="navMaterialCount">0</span></button>
-        <button class="nav-item" data-view="movements"><span class="nav-icon">↔</span> Stok Hareketleri</button>
-        <button class="nav-item" data-view="depots"><span class="nav-icon">▥</span> Depolar</button>
-        <button class="nav-item" data-view="labels"><span class="nav-icon">▦</span> QR Etiketleri</button>
-      </nav>
-      <div class="sidebar-bottom">
-        <div class="mode-card">
-          <span class="mode-dot"></span>
-          <div><strong>Test modu</strong><small>Yerel kayıt açık</small></div>
-          <span class="mode-pulse"></span>
-        </div>
-        <button class="nav-item" id="exportBtn"><span class="nav-icon">⇩</span> Verileri dışa aktar</button>
-        <button class="nav-item" id="importBtn"><span class="nav-icon">⇧</span> Yedekten içe aktar</button>
-        <input type="file" id="importFile" accept="application/json,.json" hidden>
-        <div class="user-panel"><div class="avatar">DQ</div><div><strong>Depo yöneticisi</strong><small>Yerel çalışma alanı</small></div><span class="user-menu">⋯</span></div>
-      </div>
+      <nav class="nav-list" aria-label="Ana menü"><button class="nav-item active" data-view="dashboard"><span class="nav-icon">▦</span> Genel Bakış</button><button class="nav-item" data-view="materials"><span class="nav-icon">▤</span> Malzemeler <span class="nav-count" id="navMaterialCount">0</span></button><button class="nav-item" data-view="movements"><span class="nav-icon">↔</span> Stok Hareketleri</button><button class="nav-item" data-view="depots"><span class="nav-icon">▥</span> Depolar</button><button class="nav-item" data-view="labels"><span class="nav-icon">▦</span> QR Etiketleri</button></nav>
+      <div class="sidebar-bottom"><div class="mode-card"><span class="mode-dot"></span><div><strong>Test modu</strong><small>Yerel kayıt açık</small></div><span class="mode-pulse"></span></div><button class="nav-item" id="exportBtn"><span class="nav-icon">⇩</span> JSON yedekle</button><button class="nav-item" id="importBtn"><span class="nav-icon">⇧</span> Yedekten içe aktar</button><input type="file" id="importFile" accept="application/json,.json" hidden><div class="user-panel"><div class="avatar">DQ</div><div><strong>Depo yöneticisi</strong><small>Yerel çalışma alanı</small></div><span class="user-menu">⋯</span></div></div>
     </aside>
-
     <main class="main-area">
-      <header class="topbar">
-        <div class="topbar-left"><button class="mobile-menu" id="mobileMenu" aria-label="Menüyü aç">☰</button><div class="breadcrumb">Depo Yönetimi <span>/</span> <strong id="crumbTitle">Genel Bakış</strong></div></div>
-        <div class="topbar-actions">
-          <div class="system-pill"><span></span> Sistem hazır</div>
-          <button class="icon-button" id="scanBtn" title="QR kod tara" aria-label="QR kod tara">▦</button>
-          <button class="primary-button top-add" id="topAddBtn"><span>＋</span> Malzeme ekle</button>
-        </div>
-      </header>
-
-      <section class="page-content">
-        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <header class="topbar"><div class="topbar-left"><button class="mobile-menu" id="mobileMenu" aria-label="Menüyü aç">☰</button><div class="breadcrumb">Depo Yönetimi <span>/</span> <strong id="crumbTitle">Genel Bakış</strong></div></div><div class="topbar-actions"><div class="system-pill"><span></span> Sistem hazır</div><button class="icon-button" id="scanBtn" title="QR kod tara" aria-label="QR kod tara">▦</button><button class="primary-button top-add" id="topAddBtn"><span>＋</span> Malzeme ekle</button></div></header>
+      <section class="page-content"><div id="toast" class="toast" role="status" aria-live="polite"></div>
         <section class="view active" id="view-dashboard">
-          <div class="page-heading">
-            <div><div class="eyebrow"><span class="eyebrow-line"></span> ENVANTER KONTROL MERKEZİ</div><h1>Genel Bakış<span class="heading-period"> / TEST ORTAMI</span></h1><p class="subheading">Depolarını, stok seviyelerini ve son hareketleri tek yerden takip et.</p></div>
-            <div class="heading-date" id="todayDate"></div>
-          </div>
-          <div class="stats-grid">
-            <article class="stat-card"><div class="stat-top"><span class="stat-label">Toplam malzeme çeşidi</span><span class="stat-icon blue">▤</span></div><div class="stat-number" id="statMaterials">0</div><div class="stat-foot"><span class="stat-neutral">Kayıtlı ürün</span><span class="stat-footnote">tüm depolar</span></div></article>
-            <article class="stat-card"><div class="stat-top"><span class="stat-label">Toplam stok miktarı</span><span class="stat-icon violet">▦</span></div><div class="stat-number" id="statUnits">0</div><div class="stat-foot"><span class="stat-neutral">Birim bazında</span><span class="stat-footnote">tüm ürünler</span></div></article>
-            <article class="stat-card"><div class="stat-top"><span class="stat-label">Kritik stok</span><span class="stat-icon amber">△</span></div><div class="stat-number" id="statCritical">0</div><div class="stat-foot"><span class="stat-warning">Minimum seviyede</span><span class="stat-footnote">kontrol gerekli</span></div></article>
-            <article class="stat-card"><div class="stat-top"><span class="stat-label">Aktif depo</span><span class="stat-icon green">▥</span></div><div class="stat-number" id="statDepots">4</div><div class="stat-foot"><span class="stat-neutral">3 ana + 1 test</span><span class="stat-footnote">konum tanımlı</span></div></article>
-          </div>
-          <div class="dashboard-grid">
-            <section class="panel depot-panel">
-              <div class="panel-heading"><div><h2>Depo durumları</h2><p>Her lokasyonun stok görünümü</p></div><button class="text-button" data-goto="depots">Tüm depolar <span>→</span></button></div>
-              <div class="depot-list" id="dashboardDepots"></div>
-            </section>
-            <section class="panel quick-panel">
-              <div class="panel-heading"><div><h2>Hızlı işlemler</h2><p>Sık kullanılan işlemlere eriş</p></div></div>
-              <div class="quick-actions">
-                <button class="quick-action" id="quickAdd"><span class="quick-icon q-blue">＋</span><span><strong>Yeni malzeme</strong><small>Stok kartı oluştur</small></span><b>→</b></button>
-                <button class="quick-action" id="quickMove"><span class="quick-icon q-purple">↔</span><span><strong>Stok hareketi</strong><small>Giriş, çıkış veya transfer</small></span><b>→</b></button>
-                <button class="quick-action" id="quickQR"><span class="quick-icon q-green">▦</span><span><strong>QR etiketi üret</strong><small>Malzeme kodunu yazdır</small></span><b>→</b></button>
-                <button class="quick-action" id="quickScan"><span class="quick-icon q-amber">⌕</span><span><strong>Kod ile bul</strong><small>QR veya malzeme kodu ara</small></span><b>→</b></button>
-              </div>
-              <div class="tip-box"><span>✦</span><div><strong>İpucu</strong><p>Her malzemeye bir QR etiketi bağla. Telefonla tarayınca malzeme kartını hızla açabilirsin.</p></div></div>
-            </section>
-          </div>
-          <section class="panel table-panel">
-            <div class="panel-heading"><div><h2>Son eklenen malzemeler</h2><p>Envantere en son dahil edilen kayıtlar</p></div><button class="text-button" data-goto="materials">Malzemeleri gör <span>→</span></button></div>
-            <div class="table-wrap"><table><thead><tr><th>MALZEME</th><th>KOD</th><th>DEPO / KONUM</th><th>STOK</th><th>DURUM</th><th></th></tr></thead><tbody id="recentTable"></tbody></table></div>
-          </section>
+          <div class="page-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> ENVANTER KONTROL MERKEZİ</div><h1>Genel Bakış<span class="heading-period"> / TEST ORTAMI</span></h1><p class="subheading">Depolarını, stok seviyelerini ve son hareketleri tek yerden takip et.</p></div><div class="heading-date" id="todayDate"></div></div>
+          <div class="stats-grid"><article class="stat-card"><div class="stat-top"><span class="stat-label">Toplam malzeme çeşidi</span><span class="stat-icon blue">▤</span></div><div class="stat-number" id="statMaterials">0</div><div class="stat-foot"><span class="stat-neutral">Kayıtlı ürün</span><span class="stat-footnote">tüm depolar</span></div></article><article class="stat-card"><div class="stat-top"><span class="stat-label">Toplam stok miktarı</span><span class="stat-icon violet">▦</span></div><div class="stat-number" id="statUnits">0</div><div class="stat-foot"><span class="stat-neutral">Birim bazında</span><span class="stat-footnote">tüm ürünler</span></div></article><article class="stat-card"><div class="stat-top"><span class="stat-label">Kritik stok</span><span class="stat-icon amber">△</span></div><div class="stat-number" id="statCritical">0</div><div class="stat-foot"><span class="stat-warning">Minimum seviyede</span><span class="stat-footnote">kontrol gerekli</span></div></article><article class="stat-card"><div class="stat-top"><span class="stat-label">Aktif depo</span><span class="stat-icon green">▥</span></div><div class="stat-number" id="statDepots">4</div><div class="stat-foot"><span class="stat-neutral">3 ana + 1 test</span><span class="stat-footnote">konum tanımlı</span></div></article></div>
+          <div class="dashboard-grid"><section class="panel depot-panel"><div class="panel-heading"><div><h2>Depo durumları</h2><p>Her lokasyonun stok görünümü</p></div><button class="text-button" data-goto="depots">Tüm depolar <span>→</span></button></div><div class="depot-list" id="dashboardDepots"></div></section><section class="panel quick-panel"><div class="panel-heading"><div><h2>Hızlı işlemler</h2><p>Sık kullanılan işlemlere eriş</p></div></div><div class="quick-actions"><button class="quick-action" id="quickAdd"><span class="quick-icon q-blue">＋</span><span><strong>Yeni malzeme</strong><small>Stok kartı oluştur</small></span><b>→</b></button><button class="quick-action" id="quickMove"><span class="quick-icon q-purple">↔</span><span><strong>Stok hareketi</strong><small>Giriş, çıkış veya transfer</small></span><b>→</b></button><button class="quick-action" id="quickQR"><span class="quick-icon q-green">▦</span><span><strong>QR etiketi üret</strong><small>Malzeme kodunu yazdır</small></span><b>→</b></button><button class="quick-action" id="quickScan"><span class="quick-icon q-amber">⌕</span><span><strong>Kod ile bul</strong><small>QR veya malzeme kodu ara</small></span><b>→</b></button></div><div class="tip-box"><span>✦</span><div><strong>İpucu</strong><p>Her malzemeye bir QR etiketi bağla. Telefonla tarayınca malzeme kartını hızla açabilirsin.</p></div></div></section></div>
+          <section class="panel table-panel"><div class="panel-heading"><div><h2>Son eklenen malzemeler</h2><p>Envantere en son dahil edilen kayıtlar</p></div><button class="text-button" data-goto="materials">Malzemeleri gör <span>→</span></button></div><div class="table-wrap"><table><thead><tr><th>MALZEME</th><th>KOD</th><th>DEPO / KONUM</th><th>STOK</th><th>DURUM</th><th></th></tr></thead><tbody id="recentTable"></tbody></table></div></section>
         </section>
-
-        <section class="view" id="view-materials">
-          <div class="page-heading compact-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> ENVANTER KATALOĞU</div><h1>Malzemeler</h1><p class="subheading">Stok kartlarını ara, konumlarını görüntüle ve QR etiketi oluştur.</p></div><button class="primary-button" id="materialsAdd">＋ Yeni malzeme</button></div>
-          <div class="panel list-panel">
-            <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="materialSearch" placeholder="Malzeme adı, kodu, marka veya raf ara..." autocomplete="off"></div><select id="depotFilter" aria-label="Depoya göre filtrele"><option value="">Tüm depolar</option></select><select id="stockFilter" aria-label="Stok durumuna göre filtrele"><option value="">Tüm stok durumları</option><option value="critical">Kritik stok</option><option value="normal">Normal stok</option><option value="zero">Stokta yok</option></select><button class="secondary-button" id="clearFilters">Sıfırla</button></div>
-            <div class="table-wrap"><table><thead><tr><th>MALZEME</th><th>MALZEME KODU</th><th>KATEGORİ</th><th>DEPO / RAF</th><th>MEVCUT STOK</th><th>DURUM</th><th></th></tr></thead><tbody id="materialsTable"></tbody></table></div>
-            <div class="table-footer"><span id="materialsResultCount">0 kayıt</span><span>Test verileri bu tarayıcıda saklanır</span></div>
-          </div>
-        </section>
-
-        <section class="view" id="view-movements">
-          <div class="page-heading compact-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> HAREKET KAYDI</div><h1>Stok Hareketleri</h1><p class="subheading">Stok girişlerini, çıkışlarını ve depo transferlerini tarihçesiyle izle.</p></div><button class="primary-button" id="movementAdd">＋ Hareket ekle</button></div>
-          <section class="panel list-panel"><div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="movementSearch" placeholder="Malzeme veya işlem kodu ara..."></div><select id="movementTypeFilter" aria-label="Hareket türü"><option value="">Tüm hareketler</option><option value="Giriş">Stok girişi</option><option value="Çıkış">Stok çıkışı</option><option value="Transfer">Transfer</option><option value="Düzeltme">Stok düzeltme</option></select></div><div class="table-wrap"><table><thead><tr><th>TARİH / SAAT</th><th>MALZEME</th><th>İŞLEM</th><th>MİKTAR</th><th>LOKASYON</th><th>İŞLEM NOTU</th></tr></thead><tbody id="movementTable"></tbody></table></div><div class="table-footer"><span id="movementResultCount">0 hareket</span><span>Hareketler kayıt altına alınır</span></div></section>
-        </section>
-
-        <section class="view" id="view-depots">
-          <div class="page-heading compact-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> LOKASYON HARİTASI</div><h1>Depolar</h1><p class="subheading">Depoları ve raf konumlarını düzenli bir kod yapısıyla tanımla.</p></div><button class="primary-button" id="addDepotBtn">＋ Depo ekle</button></div>
-          <div class="depot-cards" id="depotCards"></div>
-          <div class="panel location-guide"><div class="panel-heading"><div><h2>Konum kodlama standardı</h2><p>Her malzeme için aynı mantıkla, bulunabilir adres oluştur.</p></div></div><div class="location-example"><span class="location-segment">D02</span><span class="location-sep">—</span><span class="location-segment">A</span><span class="location-sep">—</span><span class="location-segment">03</span><span class="location-caption">Depo · Raf sırası · Göz numarası</span></div><p class="location-note">Örnek: <strong>D02-A-03</strong> = Mekanik Atölye, A rafı, 03 numaralı göz. Konum alanlarını malzeme kartında düzenleyebilirsin.</p></div>
-        </section>
-
-        <section class="view" id="view-labels">
-          <div class="page-heading compact-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> QR ETİKET ATÖLYESİ</div><h1>QR Etiketleri</h1><p class="subheading">Malzeme koduna bağlı QR etiketleri üret ve yazdır.</p></div></div>
-          <div class="label-layout"><section class="panel label-form"><h2>Etiket oluştur</h2><p>Bir malzeme seç veya kodunu gir. Etiket baskıya uygun şekilde hazırlanır.</p><label for="labelMaterial">Malzeme</label><select id="labelMaterial"></select><label for="labelCopies">Etiket adedi</label><input id="labelCopies" type="number" min="1" max="60" value="1"><button class="primary-button full-width" id="generateLabels">▦ Etiketleri oluştur</button><div class="form-note">QR kod, malzemenin benzersiz kodunu taşır. Bu test sürümünde aynı tarayıcıdaki kayıtla eşleşir.</div></section><section class="panel label-preview"><div class="panel-heading"><div><h2>Baskı önizleme</h2><p>Etiketler A4 yazıcı çıktısına uygundur.</p></div><button class="secondary-button" id="printLabels">⎙ Yazdır</button></div><div id="labelOutput" class="label-output"><div class="empty-state"><div class="empty-symbol">▦</div><strong>Henüz etiket oluşturulmadı</strong><p>Soldan malzemeyi seç ve QR üret.</p></div></div></section></div>
-        </section>
+        <section class="view" id="view-materials"><div class="page-heading compact-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> ENVANTER KATALOĞU</div><h1>Malzemeler</h1><p class="subheading">Stok kartlarını ara, konumlarını görüntüle ve QR etiketi oluştur.</p></div><button class="primary-button" id="materialsAdd">＋ Yeni malzeme</button></div><div class="panel list-panel"><div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="materialSearch" placeholder="Malzeme adı, kodu, marka veya raf ara..." autocomplete="off"></div><select id="depotFilter" aria-label="Depoya göre filtrele"><option value="">Tüm depolar</option></select><select id="stockFilter" aria-label="Stok durumuna göre filtrele"><option value="">Tüm stok durumları</option><option value="critical">Kritik stok</option><option value="normal">Normal stok</option><option value="zero">Stokta yok</option></select><button class="secondary-button" id="clearFilters">Sıfırla</button></div><div class="table-wrap"><table><thead><tr><th>MALZEME</th><th>MALZEME KODU</th><th>KATEGORİ</th><th>DEPO / RAF</th><th>MEVCUT STOK</th><th>DURUM</th><th></th></tr></thead><tbody id="materialsTable"></tbody></table></div><div class="table-footer"><span id="materialsResultCount">0 kayıt</span><span>Test verileri bu tarayıcıda saklanır</span></div></div></section>
+        <section class="view" id="view-movements"><div class="page-heading compact-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> HAREKET KAYDI</div><h1>Stok Hareketleri</h1><p class="subheading">Stok girişlerini, çıkışlarını ve depo transferlerini tarihçesiyle izle.</p></div><button class="primary-button" id="movementAdd">＋ Hareket ekle</button></div><section class="panel list-panel"><div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="movementSearch" placeholder="Malzeme veya işlem kodu ara..."></div><select id="movementTypeFilter" aria-label="Hareket türü"><option value="">Tüm hareketler</option><option value="Giriş">Stok girişi</option><option value="Çıkış">Stok çıkışı</option><option value="Transfer">Transfer</option><option value="Düzeltme">Stok düzeltme</option></select></div><div class="table-wrap"><table><thead><tr><th>TARİH / SAAT</th><th>MALZEME</th><th>İŞLEM</th><th>MİKTAR</th><th>LOKASYON</th><th>İŞLEM NOTU</th></tr></thead><tbody id="movementTable"></tbody></table></div><div class="table-footer"><span id="movementResultCount">0 hareket</span><span>Hareketler kayıt altına alınır</span></div></section></section>
+        <section class="view" id="view-depots"><div class="page-heading compact-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> LOKASYON HARİTASI</div><h1>Depolar</h1><p class="subheading">Depoları ve raf konumlarını düzenli bir kod yapısıyla tanımla.</p></div><button class="primary-button" id="addDepotBtn">＋ Depo ekle</button></div><div class="depot-cards" id="depotCards"></div><div class="panel location-guide"><div class="panel-heading"><div><h2>Konum kodlama standardı</h2><p>Her malzeme için aynı mantıkla, bulunabilir adres oluştur.</p></div></div><div class="location-example"><span class="location-segment">D02</span><span class="location-sep">—</span><span class="location-segment">A</span><span class="location-sep">—</span><span class="location-segment">03</span><span class="location-caption">Depo · Raf sırası · Göz numarası</span></div><p class="location-note">Örnek: <strong>D02-A-03</strong> = Mekanik Atölye, A rafı, 03 numaralı göz. Konum alanlarını malzeme kartında düzenleyebilirsin.</p></div></section>
+        <section class="view" id="view-labels"><div class="page-heading compact-heading"><div><div class="eyebrow"><span class="eyebrow-line"></span> QR ETİKET ATÖLYESİ</div><h1>QR Etiketleri</h1><p class="subheading">Malzeme koduna bağlı QR etiketleri üret ve yazdır.</p></div></div><div class="label-layout"><section class="panel label-form"><h2>Etiket oluştur</h2><p>Bir malzeme seç veya kodunu gir. Etiket baskıya uygun şekilde hazırlanır.</p><label for="labelMaterial">Malzeme</label><select id="labelMaterial"></select><label for="labelCopies">Etiket adedi</label><input id="labelCopies" type="number" min="1" max="60" value="1"><button class="primary-button full-width" id="generateLabels">▦ Etiketleri oluştur</button><div class="form-note">QR kod, malzemenin benzersiz kodunu taşır. Bu test sürümünde aynı tarayıcıdaki kayıtla eşleşir.</div></section><section class="panel label-preview"><div class="panel-heading"><div><h2>Baskı önizleme</h2><p>Etiketler A4 yazıcı çıktısına uygundur.</p></div><button class="secondary-button" id="printLabels">⎙ Yazdır</button></div><div id="labelOutput" class="label-output"><div class="empty-state"><div class="empty-symbol">▦</div><strong>Henüz etiket oluşturulmadı</strong><p>Soldan malzemeyi seç ve QR üret.</p></div></div></section></div></section>
       </section>
     </main>
   </div>
-
   <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-header"><div><div class="eyebrow"><span class="eyebrow-line"></span><span id="modalEyebrow">MALZEME KARTI</span></div><h2 id="modalTitle">Yeni malzeme</h2></div><button class="modal-close" id="modalClose" aria-label="Pencereyi kapat">×</button></div><div id="modalBody" class="modal-body"></div><div id="modalFooter" class="modal-footer"></div></section></div>
   <div class="scan-overlay" id="scanOverlay" hidden><div class="scan-card"><button id="scanClose" class="modal-close scan-close" aria-label="Kapat">×</button><div class="eyebrow"><span class="eyebrow-line"></span> HIZLI ERİŞİM</div><h2>Malzeme kodunu tara veya gir</h2><p>Telefonundaki kamerayla QR tarayabilir ya da malzeme kodunu doğrudan yazabilirsin.</p><div id="qr-reader" class="qr-reader"></div><div class="scan-manual"><input id="manualCode" placeholder="Örn. MLZ-0001" autocomplete="off"><button class="primary-button" id="findCodeBtn">Malzemeyi bul</button></div><div id="scanHelp" class="form-note">Kamera desteği tarayıcıya bağlıdır. HTTPS üzerinden açman gerekir.</div></div></div>
   <div class="print-root" id="printRoot"></div>
