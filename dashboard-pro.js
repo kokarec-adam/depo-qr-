@@ -70,12 +70,19 @@
   }
 
   function bindDepotRows(){
-    document.querySelectorAll('#dashboardDepots .depot-row').forEach(row=>{
-      if(row.dataset.depotBound)return; row.dataset.depotBound='1';
-      row.setAttribute('role','button');row.setAttribute('tabindex','0');
-      const code=(row.querySelector('.depot-main small')?.textContent||'').split('·')[0].trim();
-      const open=()=>openDepotInventory(code);
-      row.addEventListener('click',open); row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}});
+    if(document.documentElement.dataset.depotClickDelegation === '1') return;
+    document.documentElement.dataset.depotClickDelegation = '1';
+    const activate = row => {
+      const id = row.dataset.depotId || (row.querySelector('.depot-main small')?.textContent || '').split('·')[0].trim();
+      if(id) openDepotInventory(id);
+    };
+    document.addEventListener('click', event => {
+      const row = event.target.closest('#dashboardDepots .depot-row');
+      if(row) { event.preventDefault(); activate(row); }
+    });
+    document.addEventListener('keydown', event => {
+      const row = event.target.closest('#dashboardDepots .depot-row');
+      if(row && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); activate(row); }
     });
   }
 
