@@ -17,3 +17,9 @@
 .topbar-actions > #materialSearch,
 .topbar-actions > input#materialSearch { display: none !important; }
 .view:not(.active) { display: none !important; }
+
+/* Hard guard: the materials catalog must never overlay the dashboard/header. */
+#view-dashboard.active ~ #view-materials { display: none !important; }
+#view-dashboard.active ~ .view { display: none !important; }
+#view-materials:not(.active), #view-movements:not(.active), #view-depots:not(.active), #view-labels:not(.active) { display: none !important; }
+#view-dashboard:not(.active) { display: none !important; }
