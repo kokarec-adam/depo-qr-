@@ -111,7 +111,7 @@
     $('movementResultCount').textContent=rows.length+' hareket';
   }
   function renderDepots() {
-    $('depotCards').innerHTML=data.depots.map(d=>{const ms=getDepotMaterials(d.id), critical=ms.filter(m=>statusOf(m)!=='normal').length;return '<article class="depot-card"><div class="depot-card-top"><div class="depot-card-icon">'+({D01:'▥',D02:'⚙',D03:'▣',D99:'⌘'}[d.id]||'▥')+'</div><div class="depot-card-info"><h3>'+esc(d.name)+'</h3><p>'+esc(d.description||'Depo açıklaması eklenmedi')+'</p></div><code class="depot-code">'+esc(d.id)+'</code></div><div class="depot-card-stats"><div><small>Toplam stok birimi</small><strong>'+num(depotTotal(d.id))+'</strong></div><div><small>Malzeme çeşidi</small><strong>'+num(ms.length)+'</strong></div></div><div class="depot-card-bottom"><small>'+critical+' kritik stok kaydı</small><button class="text-button" data-depot-edit="'+esc(d.id)+'">Depoyu düzenle →</button></div></article>'}).join('')||'<div class="empty-state">Depo tanımlanmadı.</div>';
+    $('depotCards').innerHTML=data.depots.map(d=>{const ms=getDepotMaterials(d.id), critical=ms.filter(m=>statusOf(m)!=='normal').length;return '<article class="depot-card" data-depot-open="'+esc(d.id)+'" role="button" tabindex="0" aria-label="'+esc(d.name)+' deposundaki malzemeleri gör"><div class="depot-card-top"><div class="depot-card-icon">'+({D01:'▥',D02:'⚙',D03:'▣',D99:'⌘'}[d.id]||'▥')+'</div><div class="depot-card-info"><h3>'+esc(d.name)+'</h3><p>'+esc(d.description||'Depo açıklaması eklenmedi')+'</p></div><code class="depot-code">'+esc(d.id)+'</code></div><div class="depot-card-stats"><div><small>Toplam stok birimi</small><strong>'+num(depotTotal(d.id))+'</strong></div><div><small>Malzeme çeşidi</small><strong>'+num(ms.length)+'</strong></div></div><div class="depot-card-bottom"><small>'+critical+' kritik stok kaydı</small><button class="text-button" data-depot-edit="'+esc(d.id)+'">Depoyu düzenle →</button></div></article>'}).join('')||'<div class="empty-state">Depo tanımlanmadı.</div>';
   }
   function renderLabelOptions() {
     const select=$('labelMaterial'), current=select.value;
@@ -291,7 +291,7 @@
     const go=e.target.closest('[data-goto]');if(go){goView(go.dataset.goto);return;}
     const act=e.target.closest('[data-action]');if(act){const m=material(act.dataset.id);if(act.dataset.action==='view')openDetail(act.dataset.id);else if(act.dataset.action==='edit')materialForm(m);else if(act.dataset.action==='qr')generateLabelsFor([act.dataset.id],1);return;}
     if(e.target.closest('[data-modal-close]'))closeModal();
-    const editDepot=e.target.closest('[data-depot-edit]');if(editDepot){depotForm(data.depots.find(d=>d.id===editDepot.dataset.depotEdit));return;}
+    const editDepot=e.target.closest('[data-depot-edit]');if(editDepot){e.stopPropagation();depotForm(data.depots.find(d=>d.id===editDepot.dataset.depotEdit));return;}
   });
   $('modalClose').addEventListener('click',closeModal);$('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal();});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();stopScanner();$('sidebar').classList.remove('open');}});
   $('topAddBtn').addEventListener('click',()=>materialForm());$('materialsAdd').addEventListener('click',()=>materialForm());$('quickAdd').addEventListener('click',()=>materialForm());
