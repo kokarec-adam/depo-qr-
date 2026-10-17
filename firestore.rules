@@ -1,8 +1,33 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /state/{document} {
-      allow read, write: if request.auth != null;
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isManager() {
+      return signedIn() && request.auth.token.email == 'yonetici.qr@gmail.com';
+    }
+
+    function isWorker() {
+      return signedIn() && request.auth.token.email == 'depo.saha@gmail.com';
+    }
+
+    function isAllowedUser() {
+      return isManager() || isWorker();
+    }
+
+    match /state/app {
+      allow read, write: if isAllowedUser();
+    }
+
+    match /admin/{document=**} {
+      allow read, write: if isManager();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
