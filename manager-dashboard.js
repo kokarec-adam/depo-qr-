@@ -8,6 +8,35 @@
 
   const isManager = () => document.documentElement.dataset.depoqrRole === 'manager' || window.DepoQRRole === 'manager';
 
+  function installGlobalMobileFix() {
+    if (document.getElementById('dqGlobalMobileFix')) return;
+    const style = document.createElement('style');
+    style.id = 'dqGlobalMobileFix';
+    style.textContent = `
+      @media(max-width:740px){
+        body{overflow-x:hidden}
+        .topbar{position:static!important;height:68px!important;padding:0 10px!important;z-index:20!important}
+        .topbar-left{min-width:0!important;gap:8px!important}
+        .mobile-menu{width:46px!important;height:46px!important;min-width:46px!important;flex:0 0 46px!important}
+        .breadcrumb{font-size:12px!important;line-height:1.2!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:125px!important}
+        .topbar-actions{gap:6px!important;flex:0 0 auto!important}
+        .topbar-actions .system-pill{display:none!important}
+        .topbar-actions .icon-button{width:44px!important;height:44px!important;min-width:44px!important;font-size:20px!important}
+        .topbar-actions .top-add{width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;padding:0!important;font-size:0!important;border-radius:10px!important}
+        .topbar-actions .top-add span{font-size:24px!important}
+        .sidebar-bottom #exportBtn,.sidebar-bottom #importBtn{display:none!important}
+        .excel-button{position:static!important;width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;padding:0!important;font-size:0!important;justify-content:center!important;border-radius:10px!important;box-shadow:none!important}
+        .excel-button::before{content:'▣';font-size:20px!important;line-height:1}
+        .pro-toolbar{gap:8px!important}
+        .page-content{padding:18px 10px 34px!important}
+      }
+      @media(max-width:380px){
+        .breadcrumb{max-width:105px!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function removeManagerUI() {
     document.querySelectorAll('[data-view="manager"]').forEach(el => el.remove());
     document.getElementById('view-manager')?.remove();
@@ -19,24 +48,14 @@
     if (location.hash === '#manager') history.replaceState(null, '', location.pathname + location.search);
   }
 
-  function installMobileFix() {
+  function installManagerMobileFix() {
     if (document.getElementById('dqManagerMobileFix')) return;
     const style = document.createElement('style');
     style.id = 'dqManagerMobileFix';
     style.textContent = `
+      #view-manager .wm-action{cursor:pointer}
+      #view-manager .wm-action:focus-visible{outline:3px solid #7db8e2;outline-offset:2px}
       @media(max-width:740px){
-        body{overflow-x:hidden}
-        .topbar{position:static!important;height:68px!important;padding:0 10px!important}
-        .topbar-left{min-width:0!important;gap:8px!important}
-        .mobile-menu{width:46px!important;height:46px!important;flex:0 0 46px!important}
-        .breadcrumb{font-size:12px!important;line-height:1.2!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:125px!important}
-        .topbar-actions{gap:6px!important;flex:0 0 auto!important}
-        .topbar-actions .system-pill{display:none!important}
-        .topbar-actions .icon-button{width:44px!important;height:44px!important;font-size:20px!important}
-        .topbar-actions .top-add{width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important;padding:0!important;font-size:0!important;border-radius:10px!important}
-        .topbar-actions .top-add span{font-size:24px!important}
-        .sidebar-bottom #exportBtn,.sidebar-bottom #importBtn{display:none!important}
-        .page-content{padding:18px 10px 34px!important}
         #view-manager{padding:0 0 30px!important;overflow-x:hidden}
         #view-manager .wm-head{display:block!important;margin-bottom:10px!important}
         #view-manager .wm-head h1{font-size:27px!important;line-height:1.12!important;margin:5px 0 4px!important}
@@ -66,11 +85,7 @@
         #view-manager .wm-track{height:96px!important}
         #view-manager .wm-bar{width:15px!important}
       }
-      @media(max-width:380px){
-        .breadcrumb{max-width:105px!important}
-        #view-manager .wm-head h1{font-size:24px!important}
-        #view-manager .wm-actions{grid-template-columns:1fr!important}
-      }
+      @media(max-width:380px){#view-manager .wm-head h1{font-size:24px!important}}
     `;
     document.head.appendChild(style);
   }
@@ -82,10 +97,12 @@
     const script = document.createElement('script');
     script.id = CORE_ID;
     script.src = CORE_URL;
-    script.onload = installMobileFix;
+    script.onload = installManagerMobileFix;
     script.onerror = () => { coreRequested = false; console.error('DepoQR yönetici paneli yüklenemedi.'); };
     document.head.appendChild(script);
   }
+
+  installGlobalMobileFix();
 
   const observer = new MutationObserver(() => {
     if (isManager()) loadManagerCore();
