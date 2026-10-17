@@ -3,6 +3,7 @@
 
   const V = '13.0.0';
   const KEY = 'depoqr_v1';
+  const PENDING_KEY = 'depoqr_pending_cloud';
   const PATH = 'state/app';
   const cfg = {
     apiKey: 'AI'+'zaSyBbkDJdqu_W1hr_vBfQbgq7vV81NDt8ZTY',
@@ -25,6 +26,9 @@
     try { return JSON.parse(localStorage.getItem(KEY) || 'null'); }
     catch (_) { return null; }
   };
+  const isPending = () => localStorage.getItem(PENDING_KEY) === '1';
+  const markPending = () => { try { localStorage.setItem(PENDING_KEY, '1'); } catch (_) {} };
+  const clearPending = () => { try { localStorage.removeItem(PENDING_KEY); } catch (_) {} };
   const eq = (a,b) => {
     try { return JSON.stringify(a) === JSON.stringify(b); }
     catch (_) { return false; }
@@ -70,12 +74,9 @@
         <h2>Bulut sistemine giriş</h2>
         <p>Saha ve yönetim ekranına devam etmek için DepoQR hesabınla giriş yap.</p>
         <form>
-          <label for="dqEmail">E-posta</label>
-          <input id="dqEmail" type="email" autocomplete="username" required>
-          <label for="dqPass">Şifre</label>
-          <input id="dqPass" type="password" autocomplete="current-password" required>
-          <button type="submit">Giriş yap</button>
-          <div class="dqErr" id="dqErr"></div>
+          <label for="dqEmail">E-posta</label><input id="dqEmail" type="email" autocomplete="username" required>
+          <label for="dqPass">Şifre</label><input id="dqPass" type="password" autocomplete="current-password" required>
+          <button type="submit">Giriş yap</button><div class="dqErr" id="dqErr"></div>
         </form>
       </div>`;
     document.body.appendChild(d);
@@ -83,76 +84,41 @@
     if (savedEmail) d.querySelector('#dqEmail').value = savedEmail;
     d.querySelector('form').addEventListener('submit', async e => {
       e.preventDefault();
-      const b = d.querySelector('button');
-      const err = d.querySelector('#dqErr');
-      const email = d.querySelector('#dqEmail').value.trim();
-      const pass = d.querySelector('#dqPass').value;
+      const b = d.querySelector('button'), err = d.querySelector('#dqErr');
+      const email = d.querySelector('#dqEmail').value.trim(), pass = d.querySelector('#dqPass').value;
       b.disabled = true; err.textContent = '';
-      try {
-        localStorage.setItem('depoqr_login_email', email);
-        await signIn(email, pass);
-      } catch (x) {
+      try { localStorage.setItem('depoqr_login_email', email); await signIn(email, pass); }
+      catch (x) {
         const code = String(x?.code || '');
-        err.textContent = code.includes('invalid-credential') || code.includes('invalid-login-credentials')
-          ? 'E-posta veya şifre hatalı.'
-          : code.includes('too-many-requests')
-            ? 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.'
-            : 'Giriş yapılamadı. İnternet bağlantısını kontrol et.';
+        err.textContent = code.includes('invalid-credential') || code.includes('invalid-login-credentials') ? 'E-posta veya şifre hatalı.' : code.includes('too-many-requests') ? 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.' : 'Giriş yapılamadı. İnternet bağlantısını kontrol et.';
         b.disabled = false;
       }
     });
   }
 
   function injectFieldActions() {
-    const modal = document.getElementById('modalBackdrop');
-    const eyebrow = document.getElementById('modalEyebrow');
-    const body = document.getElementById('modalBody');
+    const modal = document.getElementById('modalBackdrop'), eyebrow = document.getElementById('modalEyebrow'), body = document.getElementById('modalBody');
     if (!modal || !eyebrow || !body || !modal.classList.contains('open')) return;
     if (!String(eyebrow.textContent || '').startsWith('MALZEME KARTI')) return;
     if (body.querySelector('.dq-field-actions')) return;
-
-    const styleId = 'dqFieldStyle';
-    if (!document.getElementById(styleId)) {
-      const s = document.createElement('style'); s.id = styleId;
-      s.textContent = `
-        .dq-field-actions{margin:0 0 18px;padding:14px;border:1px solid #263646;border-radius:14px;background:#0f1720}
-        .dq-field-actions-title{font-size:11px;letter-spacing:.12em;color:#7f93a7;font-weight:800;margin-bottom:10px}
-        .dq-field-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
-        .dq-field-btn{min-height:72px;border:1px solid #304153;background:#16212d;color:#eef4f9;border-radius:11px;padding:9px 7px;font:700 13px/1.2 DM Sans,system-ui,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
-        .dq-field-btn span{font-size:23px;line-height:1}.dq-field-btn:hover{border-color:#6fa7ff;transform:translateY(-1px)}
-        .dq-field-btn.primary{background:#1b3049;border-color:#42678e}.dq-field-btn.warn{background:#30251b;border-color:#6d5130}.dq-field-btn.move{background:#241f34;border-color:#4e4770}.dq-field-btn.count{background:#19302b;border-color:#3e685e}
-        @media(max-width:700px){.dq-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dq-field-btn{min-height:82px;font-size:14px}.dq-field-actions{padding:12px}.modal{width:min(96vw,720px)}}
-      `;
+    if (!document.getElementById('dqFieldStyle')) {
+      const s = document.createElement('style'); s.id = 'dqFieldStyle';
+      s.textContent = `.dq-field-actions{margin:0 0 18px;padding:14px;border:1px solid #263646;border-radius:14px;background:#0f1720}.dq-field-actions-title{font-size:11px;letter-spacing:.12em;color:#7f93a7;font-weight:800;margin-bottom:10px}.dq-field-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.dq-field-btn{min-height:72px;border:1px solid #304153;background:#16212d;color:#eef4f9;border-radius:11px;padding:9px 7px;font:700 13px/1.2 DM Sans,system-ui,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}.dq-field-btn span{font-size:23px;line-height:1}.dq-field-btn:hover{border-color:#6fa7ff;transform:translateY(-1px)}.dq-field-btn.primary{background:#1b3049;border-color:#42678e}.dq-field-btn.warn{background:#30251b;border-color:#6d5130}.dq-field-btn.move{background:#241f34;border-color:#4e4770}.dq-field-btn.count{background:#19302b;border-color:#3e685e}@media(max-width:700px){.dq-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dq-field-btn{min-height:82px;font-size:14px}.dq-field-actions{padding:12px}.modal{width:min(96vw,720px)}}`;
       document.head.appendChild(s);
     }
-
     const wrap = document.createElement('div');
     wrap.className = 'dq-field-actions';
-    wrap.innerHTML = `
-      <div class="dq-field-actions-title">SAHA HIZLI İŞLEMLERİ</div>
-      <div class="dq-field-grid">
-        <button type="button" class="dq-field-btn count" data-dq-op="count"><span>✓</span>Sayım</button>
-        <button type="button" class="dq-field-btn primary" data-dq-op="in"><span>＋</span>Stok ekle</button>
-        <button type="button" class="dq-field-btn warn" data-dq-op="out"><span>−</span>Stok çıkar</button>
-        <button type="button" class="dq-field-btn move" data-dq-op="transfer"><span>↔</span>Depo taşı</button>
-      </div>`;
+    wrap.innerHTML = `<div class="dq-field-actions-title">SAHA HIZLI İŞLEMLERİ</div><div class="dq-field-grid"><button type="button" class="dq-field-btn count" data-dq-op="count"><span>✓</span>Sayım</button><button type="button" class="dq-field-btn primary" data-dq-op="in"><span>＋</span>Stok ekle</button><button type="button" class="dq-field-btn warn" data-dq-op="out"><span>−</span>Stok çıkar</button><button type="button" class="dq-field-btn move" data-dq-op="transfer"><span>↔</span>Depo taşı</button></div>`;
     body.prepend(wrap);
-
     wrap.addEventListener('click', e => {
-      const btn = e.target.closest('[data-dq-op]');
-      if (!btn) return;
-      const op = btn.dataset.dqOp;
-      const detailMove = document.getElementById('detailMove');
-      if (!detailMove) return;
+      const btn = e.target.closest('[data-dq-op]'); if (!btn) return;
+      const detailMove = document.getElementById('detailMove'); if (!detailMove) return;
       detailMove.click();
       setTimeout(() => {
-        const type = document.getElementById('mvType');
-        const save = document.getElementById('saveMovementBtn');
-        if (!type || !save) return;
-        type.value = op === 'in' ? 'Giriş' : op === 'out' ? 'Çıkış' : op === 'transfer' ? 'Transfer' : 'Düzeltme';
+        const type = document.getElementById('mvType'); if (!type) return;
+        type.value = btn.dataset.dqOp === 'in' ? 'Giriş' : btn.dataset.dqOp === 'out' ? 'Çıkış' : btn.dataset.dqOp === 'transfer' ? 'Transfer' : 'Düzeltme';
         type.dispatchEvent(new Event('change', {bubbles:true}));
-        const qty = document.getElementById('mvQty');
-        if (qty) qty.focus();
+        document.getElementById('mvQty')?.focus();
       }, 40);
     });
   }
@@ -164,80 +130,51 @@
       import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)
     ]);
     const {initializeApp} = appMod;
-    const {getAuth, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserLocalPersistence} = authMod;
-    const {getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, onSnapshot, runTransaction} = fsMod;
-
-    const app = initializeApp(cfg);
-    const auth = getAuth(app);
+    const {getAuth,onAuthStateChanged,signInWithEmailAndPassword,setPersistence,browserLocalPersistence} = authMod;
+    const {getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,doc,getDoc,setDoc,onSnapshot,runTransaction} = fsMod;
+    const app = initializeApp(cfg), auth = getAuth(app);
     try { await setPersistence(auth, browserLocalPersistence); } catch (_) {}
-
     let db;
-    try {
-      db = initializeFirestore(app, {
-        localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
-      });
-    } catch (_) {
-      db = getFirestore(app);
-    }
-    const ref = doc(db, PATH);
-    const signIn = (email, password) => signInWithEmailAndPassword(auth, email, password);
+    try { db = initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})}); }
+    catch (_) { db = getFirestore(app); }
+    const ref = doc(db, PATH), signIn = (email,password) => signInWithEmailAndPassword(auth,email,password);
 
     onAuthStateChanged(auth, async user => {
       if (unsubscribe) { unsubscribe(); unsubscribe = null; }
       if (!user) {
-        ready = false; lastCloud = null; revision = 0;
-        status('Giriş gerekli', false);
-        loginUI(signIn);
-        return;
+        ready = false; lastCloud = null; revision = 0; status('Giriş gerekli',false); loginUI(signIn); return;
       }
       try {
-        const snap = await getDoc(ref);
-        const local = getLocal();
+        const snap = await getDoc(ref), local = getLocal(), pending = isPending();
         if (!snap.exists()) {
           if (local && Array.isArray(local.materials) && Array.isArray(local.depots) && Array.isArray(local.movements)) {
-            revision = 1;
-            lastCloud = normalized(local);
-            await setDoc(ref, {...local, revision, updatedAt:new Date().toISOString(), updatedBy:user.uid});
+            revision = 1; lastCloud = normalized(local);
+            await setDoc(ref,{...local,revision,updatedAt:new Date().toISOString(),updatedBy:user.uid});
+            clearPending();
           }
         } else {
-          const remote = snap.data();
-          const n = normalized(remote);
-          revision = Number(remote.revision) || 1;
-          lastCloud = n;
-          if (Array.isArray(remote.materials) && Array.isArray(remote.depots) && Array.isArray(remote.movements) && !eq(local,n)) {
-            applying = true;
-            localStorage.setItem(KEY, JSON.stringify(n));
-            applying = false;
-            location.reload();
-            return;
+          const remote = snap.data(), n = normalized(remote);
+          revision = Number(remote.revision) || 1; lastCloud = n;
+          if (!pending && Array.isArray(remote.materials) && Array.isArray(remote.depots) && Array.isArray(remote.movements) && !eq(local,n)) {
+            applying = true; localStorage.setItem(KEY,JSON.stringify(n)); applying = false; location.reload(); return;
           }
         }
         ready = true;
         document.getElementById('dqLogin')?.remove();
-        status('Bulut bağlı', true);
-        unsubscribe = onSnapshot(ref, s => {
+        status('Bulut bağlı',true);
+        unsubscribe = onSnapshot(ref,s => {
           if (!ready || !s.exists()) return;
-          const remote = s.data();
-          const n = normalized(remote);
-          revision = Number(remote.revision) || revision || 1;
-          lastCloud = n;
-          if (!eq(getLocal(), n)) {
-            applying = true;
-            localStorage.setItem(KEY, JSON.stringify(n));
-            applying = false;
-            location.reload();
+          if (isPending()) return;
+          const remote = s.data(), n = normalized(remote);
+          revision = Number(remote.revision) || revision || 1; lastCloud = n;
+          if (!eq(getLocal(),n)) {
+            applying = true; localStorage.setItem(KEY,JSON.stringify(n)); applying = false; location.reload();
           }
-        }, e => {
-          console.error(e); status('Bulut bağlantısı koptu', false);
-        });
+        }, e => { console.error(e); status('Bulut bağlantısı koptu',false); });
+        if (isPending()) setTimeout(() => flushSync?.(),80);
       } catch (e) {
-        console.error(e);
-        status('Bulut hatası', false);
-        const message = e?.code === 'permission-denied'
-          ? 'Firebase güvenlik kuralları erişimi reddediyor.'
-          : e?.code === 'failed-precondition'
-            ? 'Firebase yapılandırması tamamlanmadı.'
-            : 'Firebase bağlantısı kurulamadı.';
+        console.error(e); status('Bulut hatası',false);
+        const message = e?.code === 'permission-denied' ? 'Firebase güvenlik kuralları erişimi reddediyor.' : e?.code === 'failed-precondition' ? 'Firebase yapılandırması tamamlanmadı.' : 'Firebase bağlantısı kurulamadı.';
         alert(message);
       }
     });
@@ -245,73 +182,52 @@
     flushSync = async () => {
       if (!ready || !auth.currentUser) return;
       try {
-        const state = getLocal();
-        if (!state) return;
+        const state = getLocal(); if (!state) return;
         const current = await getDoc(ref);
         const remote = current.exists() ? normalized(current.data()) : null;
         const remoteRevision = Number(current.data()?.revision) || 0;
         if (remote && lastCloud && remoteRevision !== revision && !eq(remote,lastCloud)) {
-          status('Yeni veri algılandı', false);
-          applying = true;
-          localStorage.setItem(KEY, JSON.stringify(remote));
-          applying = false;
-          lastCloud = remote;
-          revision = remoteRevision;
-          location.reload();
-          return;
+          status('Yeni veri algılandı',false);
+          applying = true; localStorage.setItem(KEY,JSON.stringify(remote)); applying = false;
+          lastCloud = remote; revision = remoteRevision; clearPending(); location.reload(); return;
         }
-        const nextRevision = Math.max(revision, remoteRevision) + 1;
-        await runTransaction(db, async tx => {
-          const latest = await tx.get(ref);
-          const latestRevision = Number(latest.data()?.revision) || 0;
+        const nextRevision = Math.max(revision,remoteRevision) + 1;
+        await runTransaction(db,async tx => {
+          const latest = await tx.get(ref), latestRevision = Number(latest.data()?.revision) || 0;
           if (latestRevision !== remoteRevision) throw new Error('DEPQR_CONCURRENT_UPDATE');
-          tx.set(ref, {...state, revision:nextRevision, updatedAt:new Date().toISOString(), updatedBy:auth.currentUser.uid});
+          tx.set(ref,{...state,revision:nextRevision,updatedAt:new Date().toISOString(),updatedBy:auth.currentUser.uid});
         });
-        revision = nextRevision;
-        lastCloud = normalized(state);
-        status('Bulut bağlı', true);
+        revision = nextRevision; lastCloud = normalized(state); clearPending(); status('Bulut bağlı',true);
       } catch (e) {
         console.error(e);
         if (e?.message === 'DEPQR_CONCURRENT_UPDATE') {
-          status('Yeni veri algılandı', false);
           try {
-            const latest = await getDoc(ref);
-            const n = normalized(latest.data());
-            revision = Number(latest.data()?.revision) || revision;
-            lastCloud = n;
-            applying = true;
-            localStorage.setItem(KEY, JSON.stringify(n));
-            applying = false;
-            location.reload();
-            return;
+            const latest = await getDoc(ref), n = normalized(latest.data());
+            revision = Number(latest.data()?.revision) || revision; lastCloud = n;
+            applying = true; localStorage.setItem(KEY,JSON.stringify(n)); applying = false; clearPending(); location.reload(); return;
           } catch (_) {}
         }
-        status('Buluta yazılamadı', false);
+        status('Buluta yazılamadı',false);
       }
     };
 
     const oldSet = Storage.prototype.setItem;
     Storage.prototype.setItem = function(k,v) {
+      if (this === localStorage && k === KEY && !applying) markPending();
       const out = oldSet.call(this,k,v);
       if (this === localStorage && k === KEY && ready && !applying) {
-        clearTimeout(timer);
-        timer = setTimeout(() => flushSync?.(), 250);
+        clearTimeout(timer); timer = setTimeout(() => flushSync?.(),250);
       }
       return out;
     };
   }
 
-  window.addEventListener('online', () => { clearTimeout(timer); timer = setTimeout(() => flushSync?.(), 300); });
-
+  window.addEventListener('online',() => { clearTimeout(timer); timer = setTimeout(() => flushSync?.(),300); });
   const observer = new MutationObserver(() => injectFieldActions());
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded',() => {
     const modal = document.getElementById('modalBackdrop');
-    if (modal) observer.observe(modal, {attributes:true, childList:true, subtree:true});
-    setTimeout(injectFieldActions, 500);
+    if (modal) observer.observe(modal,{attributes:true,childList:true,subtree:true});
+    setTimeout(injectFieldActions,500);
   });
-
-  window.addEventListener('load', () => start().catch(e => {
-    console.error(e); status('Firebase yüklenemedi', false);
-    alert('Firebase bağlantısı başlatılamadı. İnternet bağlantısını kontrol et.');
-  }));
+  window.addEventListener('load',() => start().catch(e => { console.error(e); status('Firebase yüklenemedi',false); alert('Firebase bağlantısı başlatılamadı. İnternet bağlantısını kontrol et.'); }));
 })();
