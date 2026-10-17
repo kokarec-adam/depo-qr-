@@ -103,4 +103,168 @@
 
   const observer = new MutationObserver(() => install());
   window.addEventListener('load', () => { install(); observer.observe(document.body, {childList:true, subtree:true}); });
+
+  // --- Saha ilk sürüm: QR ile açılan malzeme kartında büyük ve basit stok işlemleri ---
+  function installSahaActions() {
+    const modal = document.getElementById('modalBackdrop');
+    const eyebrow = document.getElementById('modalEyebrow');
+    const body = document.getElementById('modalBody');
+    if (!modal || !eyebrow || !body || !modal.classList.contains('open')) return;
+    const label = String(eyebrow.textContent || '');
+    if (!label.startsWith('MALZEME KARTI')) return;
+    if (body.querySelector('.dq-field-actions[data-saha-v1="1"]')) return;
+
+    const old = body.querySelector('.dq-field-actions');
+    if (old) old.remove();
+
+    if (!document.getElementById('dqSahaStyle')) {
+      const s = document.createElement('style');
+      s.id = 'dqSahaStyle';
+      s.textContent = `
+        .dq-field-actions{margin:0 0 18px;padding:14px;border:1px solid #263646;border-radius:14px;background:#0f1720}
+        .dq-field-actions-title{font-size:11px;letter-spacing:.12em;color:#7f93a7;font-weight:800;margin-bottom:10px}
+        .dq-field-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+        .dq-field-btn{min-height:78px;border:1px solid #304153;background:#16212d;color:#eef4f9;border-radius:11px;padding:9px 7px;font:700 13px/1.2 DM Sans,system-ui,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+        .dq-field-btn span{font-size:25px;line-height:1}.dq-field-btn:hover{border-color:#6fa7ff;transform:translateY(-1px)}
+        .dq-field-btn.primary{background:#1b3049;border-color:#42678e}.dq-field-btn.warn{background:#30251b;border-color:#6d5130}.dq-field-btn.move{background:#241f34;border-color:#4e4770}.dq-field-btn.count{background:#19302b;border-color:#3e685e}
+        .dq-saha-box{padding:4px 0}.dq-saha-current{display:flex;justify-content:space-between;gap:14px;padding:14px 16px;border:1px solid #dfe7ef;border-radius:12px;background:#f7f9fc;margin-bottom:16px}.dq-saha-current span{color:#6f7d8d;font-size:13px}.dq-saha-current strong{font-size:22px;color:#182432}.dq-saha-help{margin:-6px 0 16px;color:#718093;font-size:13px;line-height:1.45}.dq-saha-error{min-height:20px;margin-top:9px;color:#b42332;font-size:13px;font-weight:700}
+        @media(max-width:700px){.dq-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dq-field-btn{min-height:88px;font-size:14px}.dq-field-actions{padding:12px}.modal{width:min(96vw,720px)}}
+      `;
+      document.head.appendChild(s);
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'dq-field-actions';
+    wrap.dataset.sahaV1 = '1';
+    wrap.innerHTML = `
+      <div class="dq-field-actions-title">SAHA HIZLI İŞLEMLERİ</div>
+      <div class="dq-field-grid">
+        <button type="button" class="dq-field-btn count" data-saha-op="count"><span>✓</span>Sayım</button>
+        <button type="button" class="dq-field-btn primary" data-saha-op="in"><span>＋</span>Stok ekle</button>
+        <button type="button" class="dq-field-btn warn" data-saha-op="out"><span>−</span>Stok çıkar</button>
+        <button type="button" class="dq-field-btn move" data-saha-op="transfer"><span>↔</span>Depo taşı</button>
+      </div>`;
+    body.prepend(wrap);
+
+    wrap.addEventListener('click', e => {
+      const btn = e.target.closest('[data-saha-op]');
+      if (!btn) return;
+      openSahaOperation(btn.dataset.sahaOp, extractMaterialId(label));
+    });
+  }
+
+  function extractMaterialId(label) {
+    const m = String(label || '').match(/(MLZ-[A-Z0-9_-]+)/i);
+    return m ? m[1] : '';
+  }
+
+  function sahaData() {
+    try {
+      const d = JSON.parse(localStorage.getItem('depoqr_v1') || 'null');
+      if (d && Array.isArray(d.materials) && Array.isArray(d.depots) && Array.isArray(d.movements)) return d;
+    } catch (_) {}
+    return null;
+  }
+
+  function sahaEsc(v) {
+    return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+
+  function sahaNum(v) {
+    return new Intl.NumberFormat('tr-TR',{maximumFractionDigits:3}).format(Number(v)||0);
+  }
+
+  function sahaNextId(rows, prefix) {
+    const max = Math.max(0, ...rows.map(x => Number((String(x.id || '').match(/(\d+)$/)||[])[1]) || 0));
+    return prefix + String(max + 1).padStart(4,'0');
+  }
+
+  function openSahaOperation(op, materialId) {
+    const d = sahaData();
+    const mat = d?.materials.find(x => x.id === materialId);
+    if (!d || !mat) { alert('Malzeme kaydı bulunamadı.'); return; }
+
+    const titles = {count:'Saha sayımı',in:'Stok ekle',out:'Stok çıkar',transfer:'Depo taşı'};
+    const eyebrow = {count:'SAHA SAYIMI',in:'SAHA STOK GİRİŞİ',out:'SAHA STOK ÇIKIŞI',transfer:'SAHA DEPO TAŞIMA'}[op];
+    let body = '';
+
+    if (op === 'count') {
+      body = `<div class="dq-saha-box"><div class="dq-saha-current"><span>Sistemde görünen stok</span><strong>${sahaNum(mat.stock)} ${sahaEsc(mat.unit)}</strong></div><div class="dq-saha-help">Rafı fiziksel olarak say ve gördüğün gerçek miktarı yaz. Sistem farkı otomatik olarak düzeltme hareketi olarak kaydeder.</div><div class="field"><label for="dqSahaQty">Gerçek stok miktarı</label><input id="dqSahaQty" type="number" min="0" step="any" value="${sahaEsc(mat.stock)}" inputmode="decimal"></div><div class="field"><label for="dqSahaNote">Not</label><input id="dqSahaNote" type="text" maxlength="200" placeholder="İsteğe bağlı not"></div><div id="dqSahaError" class="dq-saha-error"></div></div>`;
+    } else if (op === 'transfer') {
+      const opts = d.depots.filter(x => x.id !== mat.depotId).map(x => `<option value="${sahaEsc(x.id)}">${sahaEsc(x.id)} · ${sahaEsc(x.name)}</option>`).join('');
+      body = `<div class="dq-saha-box"><div class="dq-saha-current"><span>Taşınacak malzeme</span><strong>${sahaNum(mat.stock)} ${sahaEsc(mat.unit)}</strong></div><div class="dq-saha-help">İlk saha sürümünde malzeme kartının tamamı yeni depoya taşınır. Stok miktarı değişmez.</div><div class="field"><label for="dqSahaDepot">Hedef depo</label><select id="dqSahaDepot">${opts || '<option value="">Başka depo yok</option>'}</select></div><div class="field"><label for="dqSahaNote">Not</label><input id="dqSahaNote" type="text" maxlength="200" placeholder="İsteğe bağlı not"></div><div id="dqSahaError" class="dq-saha-error"></div></div>`;
+    } else {
+      body = `<div class="dq-saha-box"><div class="dq-saha-current"><span>Mevcut stok</span><strong>${sahaNum(mat.stock)} ${sahaEsc(mat.unit)}</strong></div><div class="field"><label for="dqSahaQty">Miktar</label><input id="dqSahaQty" type="number" min="0.001" step="any" required placeholder="0" inputmode="decimal"></div><div class="dq-saha-help">${op === 'out' ? 'Mevcut stoktan fazla miktar çıkarılamaz.' : 'Pozitif bir miktar gir.'}</div><div class="field"><label for="dqSahaNote">Not</label><input id="dqSahaNote" type="text" maxlength="200" placeholder="İsteğe bağlı not"></div><div id="dqSahaError" class="dq-saha-error"></div></div>`;
+    }
+
+    const modal = document.getElementById('modalBackdrop');
+    const title = document.getElementById('modalTitle');
+    const eb = document.getElementById('modalEyebrow');
+    const mb = document.getElementById('modalBody');
+    const mf = document.getElementById('modalFooter');
+    if (!modal || !title || !eb || !mb || !mf) return;
+    title.textContent = titles[op];
+    eb.textContent = eyebrow;
+    mb.innerHTML = body;
+    mf.innerHTML = `<button class="secondary-button" id="dqSahaCancel">Vazgeç</button><button class="primary-button" id="dqSahaSave">✓ Kaydet</button>`;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    document.getElementById('dqSahaCancel').addEventListener('click', () => { document.getElementById('modalClose')?.click(); });
+    document.getElementById('dqSahaSave').addEventListener('click', () => saveSahaOperation(op, materialId));
+    const first = mb.querySelector('input,select');
+    if (first) setTimeout(() => first.focus(), 50);
+  }
+
+  function saveSahaOperation(op, materialId) {
+    const d = sahaData();
+    const mat = d?.materials.find(x => x.id === materialId);
+    if (!d || !mat) return;
+    const err = document.getElementById('dqSahaError');
+    const fail = msg => { if (err) err.textContent = msg; };
+    const note = document.getElementById('dqSahaNote')?.value.trim() || '';
+    const now = new Date().toISOString();
+    const actor = 'Saha';
+    const oldStock = Number(mat.stock) || 0;
+
+    if (op === 'count') {
+      const actual = Number(document.getElementById('dqSahaQty')?.value);
+      if (!Number.isFinite(actual) || actual < 0) return fail('Geçerli bir stok miktarı gir.');
+      const diff = actual - oldStock;
+      mat.stock = actual;
+      d.movements.push({id:sahaNextId(d.movements,'HRK-'),date:now,materialId:mat.id,type:'Düzeltme',qty:Math.abs(diff),from:diff<0?mat.depotId:'',to:diff>0?mat.depotId:'',note:note || `Saha sayımı: ${sahaNum(oldStock)} → ${sahaNum(actual)}`,actor});
+    } else if (op === 'in') {
+      const qty = Number(document.getElementById('dqSahaQty')?.value);
+      if (!Number.isFinite(qty) || qty <= 0) return fail('Pozitif bir miktar gir.');
+      mat.stock = oldStock + qty;
+      d.movements.push({id:sahaNextId(d.movements,'HRK-'),date:now,materialId:mat.id,type:'Giriş',qty,from:'',to:mat.depotId,note,actor});
+    } else if (op === 'out') {
+      const qty = Number(document.getElementById('dqSahaQty')?.value);
+      if (!Number.isFinite(qty) || qty <= 0) return fail('Pozitif bir miktar gir.');
+      if (qty > oldStock) return fail(`Stok yetersiz. Mevcut: ${sahaNum(oldStock)} ${mat.unit}`);
+      mat.stock = oldStock - qty;
+      d.movements.push({id:sahaNextId(d.movements,'HRK-'),date:now,materialId:mat.id,type:'Çıkış',qty,from:mat.depotId,to:'',note,actor});
+    } else if (op === 'transfer') {
+      const target = document.getElementById('dqSahaDepot')?.value;
+      if (!target || target === mat.depotId) return fail('Farklı bir hedef depo seç.');
+      const from = mat.depotId;
+      mat.depotId = target;
+      d.movements.push({id:sahaNextId(d.movements,'HRK-'),date:now,materialId:mat.id,type:'Transfer',qty:oldStock,from,to:target,note:note || 'Saha depo taşıma',actor});
+    }
+
+    try {
+      localStorage.setItem(KEY, JSON.stringify(d));
+      document.getElementById('modalClose')?.click();
+      window.location.reload();
+    } catch (_) {
+      fail('Kayıt yapılamadı. Telefonun depolama alanını kontrol et.');
+    }
+  }
+
+  const sahaObserver = new MutationObserver(() => installSahaActions());
+  window.addEventListener('load', () => {
+    const modal = document.getElementById('modalBackdrop');
+    if (modal) sahaObserver.observe(modal, {attributes:true, childList:true, subtree:true});
+    setTimeout(installSahaActions, 700);
+  });
 })();
