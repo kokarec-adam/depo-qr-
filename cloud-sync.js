@@ -1,16 +1,317 @@
 (() => {
   'use strict';
-  const V='13.0.0', KEY='depoqr_v1', PATH='state/app';
-  const cfg={apiKey:'AI'+'zaSyBbkDJdqu_W1hr_vBfQbgq7vV81NDt8ZTY',authDomain:'depoqr-1572f.firebaseapp.com',projectId:'depoqr-1572f',storageBucket:'depoqr-1572f.firebasestorage.app',messagingSenderId:'941055661444',appId:'1:941055661444:web:9ff1256775823f2025f9d1'};
-  let ready=false, applying=false, timer=null;
-  const getLocal=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(_){return null}};
-  const eq=(a,b)=>{try{return JSON.stringify(a)===JSON.stringify(b)}catch(_){return false}};
-  const normalized=r=>({depots:r.depots,materials:r.materials,movements:r.movements,seeded:r.seeded});
-  function status(t,ok=true){const p=document.querySelector('.system-pill');if(p){p.innerHTML='<span></span> '+t;p.classList.toggle('cloud-offline',!ok)}const m=document.querySelector('.mode-card');if(m){m.querySelector('strong').textContent=ok?'Bulut bağlantısı':'Bağlantı bekleniyor';m.querySelector('small').textContent=ok?'Firebase ile senkron':'İnternet bağlantısını kontrol et'}}
-  function loginUI(signIn){if(document.getElementById('dqLogin'))return;const s=document.createElement('style');s.textContent='#dqLogin{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:24px;background:rgba(10,16,24,.96);font-family:system-ui,sans-serif}.dqCard{width:min(430px,100%);background:#fff;border-radius:22px;padding:30px;color:#15202b;box-shadow:0 24px 80px #0006}.dqCard h2{margin:0 0 8px;font-size:28px}.dqCard p{color:#66717d;line-height:1.5}.dqCard label{display:block;font-weight:700;margin:14px 0 7px}.dqCard input{width:100%;box-sizing:border-box;padding:14px;border:1px solid #d7dde4;border-radius:12px;font-size:16px}.dqCard button{width:100%;margin-top:20px;padding:15px;border:0;border-radius:12px;background:#182432;color:#fff;font-weight:800;font-size:16px}.dqErr{color:#b42332;min-height:22px;margin-top:10px;font-size:14px}';document.head.appendChild(s);const d=document.createElement('div');d.id='dqLogin';d.innerHTML='<div class="dqCard"><h2>DepoQR</h2><p>Saha ve yönetim ekranına giriş yap.</p><form><label>E-posta</label><input id="dqEmail" type="email" autocomplete="username" required><label>Şifre</label><input id="dqPass" type="password" autocomplete="current-password" required><button>Giriş yap</button><div class="dqErr" id="dqErr"></div></form></div>';document.body.appendChild(d);d.querySelector('form').addEventListener('submit',async e=>{e.preventDefault();const b=d.querySelector('button'),err=d.querySelector('#dqErr');b.disabled=true;err.textContent='';try{await signIn(d.querySelector('#dqEmail').value.trim(),d.querySelector('#dqPass').value)}catch(x){err.textContent=x?.code?.includes('invalid-credential')?'E-posta veya şifre hatalı.':'Giriş yapılamadı.';b.disabled=false}})}
-  async function start(){const [{initializeApp},{getAuth,onAuthStateChanged,signInWithEmailAndPassword},{getFirestore,doc,getDoc,setDoc,onSnapshot}]=await Promise.all([import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`),import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)]);const app=initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),ref=doc(db,PATH);const signIn=(e,p)=>signInWithEmailAndPassword(auth,e,p);
-    onAuthStateChanged(auth,async user=>{if(!user){ready=false;status('Giriş gerekli',false);loginUI(signIn);return}try{const snap=await getDoc(ref),local=getLocal();if(!snap.exists()){if(local&&Array.isArray(local.materials)&&Array.isArray(local.depots)&&Array.isArray(local.movements))await setDoc(ref,{...local,updatedAt:new Date().toISOString(),updatedBy:user.uid})}else{const r=snap.data(),n=normalized(r);if(Array.isArray(r.materials)&&Array.isArray(r.depots)&&Array.isArray(r.movements)&&!eq(local,n)){applying=true;localStorage.setItem(KEY,JSON.stringify(n));applying=false;location.reload();return}}ready=true;document.getElementById('dqLogin')?.remove();status('Bulut bağlı',true);onSnapshot(ref,s=>{if(!ready||!s.exists())return;const r=s.data();if(!Array.isArray(r.materials)||!Array.isArray(r.depots)||!Array.isArray(r.movements))return;const n=normalized(r);if(eq(getLocal(),n))return;applying=true;localStorage.setItem(KEY,JSON.stringify(n));applying=false;location.reload()},e=>{console.error(e);status('Bulut bağlantısı koptu',false)})}catch(e){console.error(e);status('Bulut hatası',false);alert(e?.code==='permission-denied'?'Firebase güvenlik kuralları erişimi reddediyor.':'Firebase bağlantısı kurulamadı.')}});
-    const oldSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){const out=oldSet.call(this,k,v);if(this===localStorage&&k===KEY&&ready&&!applying){clearTimeout(timer);timer=setTimeout(async()=>{try{const state=getLocal();if(state)await setDoc(ref,{...state,updatedAt:new Date().toISOString(),updatedBy:auth.currentUser?.uid||null});status('Bulut bağlı',true)}catch(e){console.error(e);status('Buluta yazılamadı',false)}},300)}return out};
+
+  const V = '13.0.0';
+  const KEY = 'depoqr_v1';
+  const PATH = 'state/app';
+  const cfg = {
+    apiKey: 'AI'+'zaSyBbkDJdqu_W1hr_vBfQbgq7vV81NDt8ZTY',
+    authDomain: 'depoqr-1572f.firebaseapp.com',
+    projectId: 'depoqr-1572f',
+    storageBucket: 'depoqr-1572f.firebasestorage.app',
+    messagingSenderId: '941055661444',
+    appId: '1:941055661444:web:9ff1256775823f2025f9d1'
+  };
+
+  let ready = false;
+  let applying = false;
+  let timer = null;
+  let unsubscribe = null;
+  let lastCloud = null;
+  let revision = 0;
+  let flushSync = null;
+
+  const getLocal = () => {
+    try { return JSON.parse(localStorage.getItem(KEY) || 'null'); }
+    catch (_) { return null; }
+  };
+  const eq = (a,b) => {
+    try { return JSON.stringify(a) === JSON.stringify(b); }
+    catch (_) { return false; }
+  };
+  const normalized = r => ({
+    depots: Array.isArray(r?.depots) ? r.depots : [],
+    materials: Array.isArray(r?.materials) ? r.materials : [],
+    movements: Array.isArray(r?.movements) ? r.movements : [],
+    seeded: !!r?.seeded
+  });
+
+  function status(text, ok = true) {
+    const pill = document.querySelector('.system-pill');
+    if (pill) {
+      pill.innerHTML = '<span></span> ' + text;
+      pill.classList.toggle('cloud-offline', !ok);
+    }
+    const mode = document.querySelector('.mode-card');
+    if (mode) {
+      const strong = mode.querySelector('strong');
+      const small = mode.querySelector('small');
+      if (strong) strong.textContent = ok ? 'Bulut bağlantısı' : 'Bağlantı bekleniyor';
+      if (small) small.textContent = ok ? 'Firebase ile senkron' : 'İnternet bağlantısını kontrol et';
+    }
   }
-  window.addEventListener('load',()=>start().catch(e=>{console.error(e);status('Firebase yüklenemedi',false);alert('Firebase bağlantısı başlatılamadı.')}});
+
+  function loginUI(signIn) {
+    if (document.getElementById('dqLogin')) return;
+    const style = document.createElement('style');
+    style.id = 'dqLoginStyle';
+    style.textContent = `
+      #dqLogin{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:20px;background:rgba(10,16,24,.97);font-family:DM Sans,system-ui,sans-serif}
+      .dqCard{width:min(440px,100%);box-sizing:border-box;background:#111923;border:1px solid #263443;border-radius:18px;padding:30px;box-shadow:0 24px 80px rgba(0,0,0,.45);color:#edf3f8}
+      .dqBrand{display:flex;align-items:center;gap:12px;margin-bottom:24px}.dqMark{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:#182738;color:#7cb1ff;font-size:23px;border:1px solid #29405a}.dqBrand strong{font-size:24px;letter-spacing:-.02em}.dqBrand strong span{color:#73aaff}.dqBrand small{display:block;color:#7f8d9c;font-size:10px;letter-spacing:.16em;margin-top:2px}
+      .dqCard h2{margin:0 0 7px;font-size:26px;letter-spacing:-.02em}.dqCard p{margin:0 0 22px;color:#8f9dac;line-height:1.5}.dqCard label{display:block;font-weight:700;margin:14px 0 7px;color:#d9e1e8}.dqCard input{width:100%;box-sizing:border-box;padding:14px 15px;border:1px solid #344454;background:#0d141c;color:#edf3f8;border-radius:10px;font-size:16px;outline:none}.dqCard input:focus{border-color:#6da7ff;box-shadow:0 0 0 3px rgba(109,167,255,.12)}.dqCard button{width:100%;margin-top:20px;padding:14px 16px;border:0;border-radius:10px;background:#6fa7ff;color:#0e1720;font-weight:800;font-size:16px;cursor:pointer}.dqCard button:disabled{opacity:.55;cursor:wait}.dqErr{color:#ff8d8d;min-height:22px;margin-top:10px;font-size:14px}
+    `;
+    document.head.appendChild(style);
+    const d = document.createElement('div');
+    d.id = 'dqLogin';
+    d.innerHTML = `
+      <div class="dqCard">
+        <div class="dqBrand"><div class="dqMark">▦</div><div><strong>Depo<span>QR</span></strong><small>ENVANTER SİSTEMİ</small></div></div>
+        <h2>Bulut sistemine giriş</h2>
+        <p>Saha ve yönetim ekranına devam etmek için DepoQR hesabınla giriş yap.</p>
+        <form>
+          <label for="dqEmail">E-posta</label>
+          <input id="dqEmail" type="email" autocomplete="username" required>
+          <label for="dqPass">Şifre</label>
+          <input id="dqPass" type="password" autocomplete="current-password" required>
+          <button type="submit">Giriş yap</button>
+          <div class="dqErr" id="dqErr"></div>
+        </form>
+      </div>`;
+    document.body.appendChild(d);
+    const savedEmail = localStorage.getItem('depoqr_login_email');
+    if (savedEmail) d.querySelector('#dqEmail').value = savedEmail;
+    d.querySelector('form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const b = d.querySelector('button');
+      const err = d.querySelector('#dqErr');
+      const email = d.querySelector('#dqEmail').value.trim();
+      const pass = d.querySelector('#dqPass').value;
+      b.disabled = true; err.textContent = '';
+      try {
+        localStorage.setItem('depoqr_login_email', email);
+        await signIn(email, pass);
+      } catch (x) {
+        const code = String(x?.code || '');
+        err.textContent = code.includes('invalid-credential') || code.includes('invalid-login-credentials')
+          ? 'E-posta veya şifre hatalı.'
+          : code.includes('too-many-requests')
+            ? 'Çok fazla deneme yapıldı. Biraz sonra tekrar dene.'
+            : 'Giriş yapılamadı. İnternet bağlantısını kontrol et.';
+        b.disabled = false;
+      }
+    });
+  }
+
+  function injectFieldActions() {
+    const modal = document.getElementById('modalBackdrop');
+    const eyebrow = document.getElementById('modalEyebrow');
+    const body = document.getElementById('modalBody');
+    if (!modal || !eyebrow || !body || !modal.classList.contains('open')) return;
+    if (!String(eyebrow.textContent || '').startsWith('MALZEME KARTI')) return;
+    if (body.querySelector('.dq-field-actions')) return;
+
+    const styleId = 'dqFieldStyle';
+    if (!document.getElementById(styleId)) {
+      const s = document.createElement('style'); s.id = styleId;
+      s.textContent = `
+        .dq-field-actions{margin:0 0 18px;padding:14px;border:1px solid #263646;border-radius:14px;background:#0f1720}
+        .dq-field-actions-title{font-size:11px;letter-spacing:.12em;color:#7f93a7;font-weight:800;margin-bottom:10px}
+        .dq-field-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+        .dq-field-btn{min-height:72px;border:1px solid #304153;background:#16212d;color:#eef4f9;border-radius:11px;padding:9px 7px;font:700 13px/1.2 DM Sans,system-ui,sans-serif;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+        .dq-field-btn span{font-size:23px;line-height:1}.dq-field-btn:hover{border-color:#6fa7ff;transform:translateY(-1px)}
+        .dq-field-btn.primary{background:#1b3049;border-color:#42678e}.dq-field-btn.warn{background:#30251b;border-color:#6d5130}.dq-field-btn.move{background:#241f34;border-color:#4e4770}.dq-field-btn.count{background:#19302b;border-color:#3e685e}
+        @media(max-width:700px){.dq-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dq-field-btn{min-height:82px;font-size:14px}.dq-field-actions{padding:12px}.modal{width:min(96vw,720px)}}
+      `;
+      document.head.appendChild(s);
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'dq-field-actions';
+    wrap.innerHTML = `
+      <div class="dq-field-actions-title">SAHA HIZLI İŞLEMLERİ</div>
+      <div class="dq-field-grid">
+        <button type="button" class="dq-field-btn count" data-dq-op="count"><span>✓</span>Sayım</button>
+        <button type="button" class="dq-field-btn primary" data-dq-op="in"><span>＋</span>Stok ekle</button>
+        <button type="button" class="dq-field-btn warn" data-dq-op="out"><span>−</span>Stok çıkar</button>
+        <button type="button" class="dq-field-btn move" data-dq-op="transfer"><span>↔</span>Depo taşı</button>
+      </div>`;
+    body.prepend(wrap);
+
+    wrap.addEventListener('click', e => {
+      const btn = e.target.closest('[data-dq-op]');
+      if (!btn) return;
+      const op = btn.dataset.dqOp;
+      const detailMove = document.getElementById('detailMove');
+      if (!detailMove) return;
+      detailMove.click();
+      setTimeout(() => {
+        const type = document.getElementById('mvType');
+        const save = document.getElementById('saveMovementBtn');
+        if (!type || !save) return;
+        type.value = op === 'in' ? 'Giriş' : op === 'out' ? 'Çıkış' : op === 'transfer' ? 'Transfer' : 'Düzeltme';
+        type.dispatchEvent(new Event('change', {bubbles:true}));
+        const qty = document.getElementById('mvQty');
+        if (qty) qty.focus();
+      }, 40);
+    });
+  }
+
+  async function start() {
+    const [appMod, authMod, fsMod] = await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`),
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)
+    ]);
+    const {initializeApp} = appMod;
+    const {getAuth, onAuthStateChanged, signInWithEmailAndPassword, setPersistence, browserLocalPersistence} = authMod;
+    const {getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, onSnapshot, runTransaction} = fsMod;
+
+    const app = initializeApp(cfg);
+    const auth = getAuth(app);
+    try { await setPersistence(auth, browserLocalPersistence); } catch (_) {}
+
+    let db;
+    try {
+      db = initializeFirestore(app, {
+        localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+      });
+    } catch (_) {
+      db = getFirestore(app);
+    }
+    const ref = doc(db, PATH);
+    const signIn = (email, password) => signInWithEmailAndPassword(auth, email, password);
+
+    onAuthStateChanged(auth, async user => {
+      if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+      if (!user) {
+        ready = false; lastCloud = null; revision = 0;
+        status('Giriş gerekli', false);
+        loginUI(signIn);
+        return;
+      }
+      try {
+        const snap = await getDoc(ref);
+        const local = getLocal();
+        if (!snap.exists()) {
+          if (local && Array.isArray(local.materials) && Array.isArray(local.depots) && Array.isArray(local.movements)) {
+            revision = 1;
+            lastCloud = normalized(local);
+            await setDoc(ref, {...local, revision, updatedAt:new Date().toISOString(), updatedBy:user.uid});
+          }
+        } else {
+          const remote = snap.data();
+          const n = normalized(remote);
+          revision = Number(remote.revision) || 1;
+          lastCloud = n;
+          if (Array.isArray(remote.materials) && Array.isArray(remote.depots) && Array.isArray(remote.movements) && !eq(local,n)) {
+            applying = true;
+            localStorage.setItem(KEY, JSON.stringify(n));
+            applying = false;
+            location.reload();
+            return;
+          }
+        }
+        ready = true;
+        document.getElementById('dqLogin')?.remove();
+        status('Bulut bağlı', true);
+        unsubscribe = onSnapshot(ref, s => {
+          if (!ready || !s.exists()) return;
+          const remote = s.data();
+          const n = normalized(remote);
+          revision = Number(remote.revision) || revision || 1;
+          lastCloud = n;
+          if (!eq(getLocal(), n)) {
+            applying = true;
+            localStorage.setItem(KEY, JSON.stringify(n));
+            applying = false;
+            location.reload();
+          }
+        }, e => {
+          console.error(e); status('Bulut bağlantısı koptu', false);
+        });
+      } catch (e) {
+        console.error(e);
+        status('Bulut hatası', false);
+        const message = e?.code === 'permission-denied'
+          ? 'Firebase güvenlik kuralları erişimi reddediyor.'
+          : e?.code === 'failed-precondition'
+            ? 'Firebase yapılandırması tamamlanmadı.'
+            : 'Firebase bağlantısı kurulamadı.';
+        alert(message);
+      }
+    });
+
+    flushSync = async () => {
+      if (!ready || !auth.currentUser) return;
+      try {
+        const state = getLocal();
+        if (!state) return;
+        const current = await getDoc(ref);
+        const remote = current.exists() ? normalized(current.data()) : null;
+        const remoteRevision = Number(current.data()?.revision) || 0;
+        if (remote && lastCloud && remoteRevision !== revision && !eq(remote,lastCloud)) {
+          status('Yeni veri algılandı', false);
+          applying = true;
+          localStorage.setItem(KEY, JSON.stringify(remote));
+          applying = false;
+          lastCloud = remote;
+          revision = remoteRevision;
+          location.reload();
+          return;
+        }
+        const nextRevision = Math.max(revision, remoteRevision) + 1;
+        await runTransaction(db, async tx => {
+          const latest = await tx.get(ref);
+          const latestRevision = Number(latest.data()?.revision) || 0;
+          if (latestRevision !== remoteRevision) throw new Error('DEPQR_CONCURRENT_UPDATE');
+          tx.set(ref, {...state, revision:nextRevision, updatedAt:new Date().toISOString(), updatedBy:auth.currentUser.uid});
+        });
+        revision = nextRevision;
+        lastCloud = normalized(state);
+        status('Bulut bağlı', true);
+      } catch (e) {
+        console.error(e);
+        if (e?.message === 'DEPQR_CONCURRENT_UPDATE') {
+          status('Yeni veri algılandı', false);
+          try {
+            const latest = await getDoc(ref);
+            const n = normalized(latest.data());
+            revision = Number(latest.data()?.revision) || revision;
+            lastCloud = n;
+            applying = true;
+            localStorage.setItem(KEY, JSON.stringify(n));
+            applying = false;
+            location.reload();
+            return;
+          } catch (_) {}
+        }
+        status('Buluta yazılamadı', false);
+      }
+    };
+
+    const oldSet = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(k,v) {
+      const out = oldSet.call(this,k,v);
+      if (this === localStorage && k === KEY && ready && !applying) {
+        clearTimeout(timer);
+        timer = setTimeout(() => flushSync?.(), 250);
+      }
+      return out;
+    };
+  }
+
+  window.addEventListener('online', () => { clearTimeout(timer); timer = setTimeout(() => flushSync?.(), 300); });
+
+  const observer = new MutationObserver(() => injectFieldActions());
+  window.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('modalBackdrop');
+    if (modal) observer.observe(modal, {attributes:true, childList:true, subtree:true});
+    setTimeout(injectFieldActions, 500);
+  });
+
+  window.addEventListener('load', () => start().catch(e => {
+    console.error(e); status('Firebase yüklenemedi', false);
+    alert('Firebase bağlantısı başlatılamadı. İnternet bağlantısını kontrol et.');
+  }));
 })();
