@@ -2,7 +2,7 @@
   'use strict';
   const V='13.0.0',KEY='depoqr_v1',PENDING='depoqr_pending_cloud',PATH='state/app';
   const MANAGER_EMAILS=['depo.saha@gmail.com'];
-  const cfg={apiKey:'AI'+'zaSyBbkDJd_W1hr_vBfQbgq7vV81NDt8ZTY',authDomain:'depoqr-1572f.firebaseapp.com',projectId:'depoqr-1572f',storageBucket:'depoqr-1572f.firebasestorage.app',messagingSenderId:'941055661444',appId:'1:941055661444:web:9ff1256775823f2025f9d1'};
+  const cfg={apiKey:'AI'+'zaSyBbkDJdqu_W1hr_vBfQbgq7vV81NDt8ZTY',authDomain:'depoqr-1572f.firebaseapp.com',projectId:'depoqr-1572f',storageBucket:'depoqr-1572f.firebasestorage.app',messagingSenderId:'941055661444',appId:'1:941055661444:web:9ff1256775823f2025f9d1'};
   let ready=false,applying=false,timer=null,unsubscribe=null,db=null,auth=null,ref=null,writeInFlight=false,flushSync=null;
   const getLocal=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}};
   const normalized=x=>({depots:Array.isArray(x?.depots)?x.depots:[],materials:Array.isArray(x?.materials)?x.materials:[],movements:Array.isArray(x?.movements)?x.movements:[],seeded:!!x?.seeded});
