@@ -8,6 +8,8 @@
 .sidebar::-webkit-scrollbar{width:7px}
 .sidebar::-webkit-scrollbar-track{background:transparent}
 .sidebar::-webkit-scrollbar-thumb{background:#294055;border-radius:10px}
+.sidebar .nav-list,
+.sidebar .sidebar-bottom{flex-shrink:0}
 
 @media (max-height:850px) and (min-width:741px){
   .sidebar{padding:16px 14px}
