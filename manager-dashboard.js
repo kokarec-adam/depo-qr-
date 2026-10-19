@@ -5,6 +5,7 @@
   const CORE_ID = 'dqManagerCore';
   const CORE_URL = 'https://cdn.jsdelivr.net/gh/kokarec-adam/depo-qr-@6d806aa966fcf076ba962c48d5776487473d34e1/manager-dashboard.js';
   let coreRequested = false;
+  let actionLinksInstalled = false;
 
   const isManager = () => document.documentElement.dataset.depoqrRole === 'manager' || window.DepoQRRole === 'manager';
 
@@ -30,9 +31,7 @@
         .pro-toolbar{gap:8px!important}
         .page-content{padding:18px 10px 34px!important}
       }
-      @media(max-width:380px){
-        .breadcrumb{max-width:105px!important}
-      }
+      @media(max-width:380px){.breadcrumb{max-width:105px!important}}
     `;
     document.head.appendChild(style);
   }
@@ -42,9 +41,11 @@
     document.getElementById('view-manager')?.remove();
     document.getElementById('dqManagerProStyle')?.remove();
     document.getElementById('dqManagerMobileFix')?.remove();
+    document.getElementById('dqManagerActionLinks')?.remove();
     const core = document.getElementById(CORE_ID);
     if (core) core.remove();
     coreRequested = false;
+    actionLinksInstalled = false;
     if (location.hash === '#manager') history.replaceState(null, '', location.pathname + location.search);
   }
 
@@ -55,6 +56,8 @@
     style.textContent = `
       #view-manager .wm-action{cursor:pointer}
       #view-manager .wm-action:focus-visible{outline:3px solid #7db8e2;outline-offset:2px}
+      #view-manager .wm-action .ico{transition:transform .18s ease}
+      #view-manager .wm-action:hover .ico{transform:scale(1.08)}
       @media(max-width:740px){
         #view-manager{padding:0 0 30px!important;overflow-x:hidden}
         #view-manager .wm-head{display:block!important;margin-bottom:10px!important}
@@ -90,6 +93,55 @@
     document.head.appendChild(style);
   }
 
+  function goToManagerSection(tab, matcher) {
+    const tabButton = document.querySelector(`#view-manager .wm-tab[data-tab="${tab}"]`);
+    if (tabButton) tabButton.click();
+
+    const findTarget = () => {
+      const root = document.querySelector('#view-manager #wmBody');
+      if (!root) return null;
+      const candidates = root.querySelectorAll('.wm-card, .wm-health-card, h2, h3');
+      return [...candidates].find(matcher) || null;
+    };
+
+    let tries = 0;
+    const timer = setInterval(() => {
+      const target = findTarget();
+      if (target || ++tries > 30) {
+        clearInterval(timer);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
+  }
+
+  function installActionLinks() {
+    if (actionLinksInstalled || !isManager()) return;
+    if (!document.getElementById('view-manager')) {
+      setTimeout(installActionLinks, 50);
+      return;
+    }
+    actionLinksInstalled = true;
+    const style = document.createElement('style');
+    style.id = 'dqManagerActionLinks';
+    style.textContent = `#view-manager .wm-action{cursor:pointer} #view-manager .wm-action:focus-visible{outline:3px solid #7db8e2;outline-offset:2px}`;
+    document.head.appendChild(style);
+
+    document.addEventListener('click', event => {
+      const card = event.target.closest?.('#view-manager .wm-action');
+      if (!card || !isManager()) return;
+      const text = (card.textContent || '').toLocaleLowerCase('tr-TR');
+      if (text.includes('kritik stok')) {
+        goToManagerSection('inventory', el => el.classList.contains('wm-health-card') && /kritik stok/i.test(el.textContent));
+      } else if (text.includes('hareketsiz stok')) {
+        goToManagerSection('inventory', el => /hareketsiz stok/i.test(el.textContent));
+      } else if (text.includes('hızlı artış')) {
+        goToManagerSection('overview', el => /dikkat çeken değişimler/i.test(el.textContent));
+      } else if (text.includes('transfer')) {
+        goToManagerSection('operations', el => /transfer akışları/i.test(el.textContent));
+      }
+    });
+  }
+
   function loadManagerCore() {
     if (!isManager()) return removeManagerUI();
     if (document.getElementById(CORE_ID) || coreRequested) return;
@@ -97,7 +149,10 @@
     const script = document.createElement('script');
     script.id = CORE_ID;
     script.src = CORE_URL;
-    script.onload = installManagerMobileFix;
+    script.onload = () => {
+      installManagerMobileFix();
+      installActionLinks();
+    };
     script.onerror = () => { coreRequested = false; console.error('DepoQR yönetici paneli yüklenemedi.'); };
     document.head.appendChild(script);
   }
