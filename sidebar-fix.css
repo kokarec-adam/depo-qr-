@@ -1,0 +1,37 @@
+/* DepoQR sidebar: compact layout for short office displays */
+.sidebar{
+  overflow-y:auto;
+  overflow-x:hidden;
+  scrollbar-width:thin;
+  scrollbar-color:#294055 transparent;
+}
+.sidebar::-webkit-scrollbar{width:7px}
+.sidebar::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb{background:#294055;border-radius:10px}
+
+@media (max-height:850px) and (min-width:741px){
+  .sidebar{padding:16px 14px}
+  .brand{padding:0 8px 18px;gap:10px}
+  .brand-mark{width:48px;height:48px}
+  .brand-mark svg{width:34px;height:34px}
+  .brand strong{font-size:24px}
+  .workspace-label{padding:0 12px 8px}
+  .nav-list{gap:4px}
+  .nav-item{height:50px;padding:0 13px;font-size:17px}
+  .nav-icon{font-size:21px}
+  .sidebar-bottom{margin-top:10px}
+  .mode-card{padding:10px 11px;margin-bottom:8px}
+  .sidebar-bottom>.nav-item{height:43px;font-size:14px}
+  .user-panel{margin-top:8px;padding:12px 5px 0}
+  .avatar{width:38px;height:38px}
+}
+
+@media (max-height:720px) and (min-width:741px){
+  .sidebar{padding-top:11px;padding-bottom:11px}
+  .brand{padding-bottom:12px}
+  .workspace-label{padding-bottom:5px}
+  .nav-item{height:45px}
+  .sidebar-bottom{margin-top:6px}
+  .mode-card{padding:8px 10px;margin-bottom:5px}
+  .user-panel{padding-top:8px;margin-top:5px}
+}
